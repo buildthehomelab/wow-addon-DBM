@@ -1983,7 +1983,7 @@ do
 				--Initiate backups that at least have latest version, in case the main elect doesn't have icons enabled
 				for i = 2, 3 do--Allow top 3 revisions in raid to set icons, instead of just top one
 					local electedBackup = iconSeter[i]
-					if updateNotificationDisplayed == 0 and electedBackup and playerName == electedBackup:sub(elected:find(" ") + 1) then
+					if updateNotificationDisplayed == 0 and electedBackup and playerName == electedBackup:sub(electedBackup:find(" ") + 1) then
 						private.enableIcons = true
 						DBM:Debug("You have been elected as one of 2 backup icon setters in raid that have assist/lead", 2)
 					end
@@ -2304,7 +2304,7 @@ function DBM:GetUnitCreatureId(uId)
 end
 
 function DBM:GetCIDFromGUID(guid)
-	return guid and tonumber(guid:sub(8, 12), 16) or 0
+	return type(guid) == "string" and tonumber(guid:sub(8, 12), 16) or 0
 end
 
 function DBM:IsNonPlayableGUID(guid)
@@ -3231,8 +3231,15 @@ do
 	end
 	DBM.ZONE_CHANGED = DBM.ZONE_CHANGED_INDOORS
 
+	-- Toc realm lists may name "IP40": LoadRealm loads the mod in Individual Progression 40-man raids,
+	-- BlockRealm keeps it out of them (vanilla vs WotLK Naxxramas/Onyxia on the same map).
+	local function realmMatches(realmList, checkRealm, virtualRealm)
+		return checkEntry(realmList, checkRealm) or (virtualRealm and checkEntry(realmList, virtualRealm)) or false
+	end
+
 	function DBM:LoadModsOnDemand(checkTable, checkValue, checkRealm)
 		self:Debug("LoadModsOnDemand fired")
+		local virtualRealm = self:IsIP40Raid() and "IP40" or nil
 		for _, v in ipairs(self.AddOns) do
 			local modTable = v[checkTable]
 			local modRealm = v.realm
@@ -3240,7 +3247,7 @@ do
 			local _, _, _, enabled = GetAddOnInfo(v.modId)
 			--self:Debug(v.modId.." is "..enabled, 2)
 			if not IsAddOnLoaded(v.modId) and modTable and checkEntry(modTable, checkValue) then
-				if not checkEntry(modBlockRealm, checkRealm) and (modRealm[1] == "" or checkEntry(modRealm, checkRealm)) then -- custom realm check (for non-WotLK specific mods, like Vanilla Onyxia). Toc only filled if necessary for conditional mod load based on realm
+				if not realmMatches(modBlockRealm, checkRealm, virtualRealm) and (modRealm[1] == "" or realmMatches(modRealm, checkRealm, virtualRealm)) then -- custom realm check (for non-WotLK specific mods, like Vanilla Onyxia). Toc only filled if necessary for conditional mod load based on realm
 					if enabled then
 						self:LoadMod(v)
 					else
@@ -4915,6 +4922,8 @@ do
 		["heroic10"] = "heroic",
 		["heroic25"] = "heroic25",
 	}
+	-- Any difficulty not listed above counts as normal instead of erroring on pull ("attempt to concatenate a nil value")
+	setmetatable(statVarTable, {__index = function() return "normal" end})
 
 	function DBM:StartCombat(mod, delay, event, synced, syncedStartHp, syncedEvent)
 		cSyncSender = {}
@@ -5784,6 +5793,17 @@ end
 -- 186	40 Player			raid		classic (custom?)
 -- 193	10 Player (Heroic)	raid		classic
 -- 194	25 Player (Heroic)	raid		classic
+-- Individual Progression (AzerothCore) runs 40-man Naxxramas and Onyxia's Lair on the 10-man heroic
+-- difficulty of the WotLK maps. WotLK Naxx/Onyxia have no heroic, so difficulty 3 there means the 40-man.
+local ip40AreaIds = {
+	[536] = true, -- Naxxramas
+	[719] = true, -- Onyxia's Lair
+}
+function DBM:IsIP40Raid()
+	local _, instanceType, difficulty, _, _, _, isDynamicInstance = GetInstanceInfo()
+	return instanceType == "raid" and not isDynamicInstance and difficulty == 3 and ip40AreaIds[GetCurrentMapAreaID()] or false
+end
+
 function DBM:GetCurrentInstanceDifficulty()
 	local instanceName, instanceType, difficulty, difficultyName, maxPlayers, dynamicDifficulty, isDynamicInstance = GetInstanceInfo()
 	if instanceType == "none" then
@@ -5815,11 +5835,9 @@ function DBM:GetCurrentInstanceDifficulty()
 			end
 		else -- Non-dynamic raids
 			if difficulty == 1 then
-				-- check for Timewalking instance (workaround using GetRaidDifficulty since on Warmane all the usual APIs fail and return "normal" difficulty)
-				local raidDifficulty = GetRaidDifficulty()
-				if raidDifficulty ~= difficulty and (raidDifficulty == 2 or raidDifficulty == 4) then -- extra checks due to lack of tests and no access to a timewalking server
-					return "timewalker", difficultyName.." - ", 33, maxPlayers
-				else
+				-- AzerothCore: removed the Warmane Timewalking check (GetRaidDifficulty() is only the group's
+				-- raid-difficulty setting, so a 25-man setting turned MC/BWL/AQ40 into "timewalker").
+				do
 					if maxPlayers == 40 then
 						return "normal40", difficultyName.." - ", 186, maxPlayers
 					elseif maxPlayers == 25 then
@@ -5840,6 +5858,9 @@ function DBM:GetCurrentInstanceDifficulty()
 			elseif difficulty == 2 then
 				return "normal25", difficultyName.." - ", 176, maxPlayers
 			elseif difficulty == 3 then
+				if DBM:IsIP40Raid() then -- Individual Progression Naxx40/Onyxia40 use the 10-man heroic slot
+					return "normal40", difficultyName.." - ", 186, 40
+				end
 				return "heroic10", difficultyName.." - ", 193, maxPlayers
 			elseif difficulty == 4 then
 				return "heroic25", difficultyName.." - ", 194, maxPlayers
@@ -6145,7 +6166,7 @@ do
 		for _, v in ipairs(sortMe) do
 			-- If selectedClient player's realm is not same with your's, timer recovery by selectedClient not works at all.
 			-- SendAddonMessage target channel is "WHISPER" and target player is other realm, no msg sends at all. At same realm, message sending works fine. (Maybe bliz bug or SendAddonMessage function restriction?)
-			if v.name ~= playerName and UnitIsConnected(v.id) and UnitIsPlayer(v.id) and (not UnitIsGhost(v.id)) and (GetTime() - (clientUsed[v.name] or 0)) > 10 then
+			if v.name ~= playerName and v.revision and UnitIsConnected(v.id) and UnitIsPlayer(v.id) and (not UnitIsGhost(v.id)) and (GetTime() - (clientUsed[v.name] or 0)) > 10 then -- v.revision: only DBM users (bots never reply)
 				listNum = listNum + 1
 				if listNum == requestNum then
 					selectedClient = v

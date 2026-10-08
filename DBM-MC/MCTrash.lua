@@ -29,7 +29,9 @@ do
 	local startCreatureIds = {
 		[11658] = true--Molten Giant
 	}
-	local function checkFirstPull(self, GUID)
+	local bband = bit.band
+	local COMBATLOG_OBJECT_REACTION_HOSTILE = COMBATLOG_OBJECT_REACTION_HOSTILE or 0x00000040
+	local function checkFirstPull(self, GUID, destFlags)
 		local cid = self:GetCIDFromGUID(GUID)
 		if startCreatureIds[cid] then
 			if not self.vb.firstEngageTime then
@@ -42,21 +44,25 @@ do
 			end
 			--Unregister high CPU combat log events
 			self:UnregisterShortTermEvents()
+		elseif cid ~= 0 and destFlags and bband(destFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) ~= 0 and DBM:IsNonPlayableGUID(GUID) then
+			--First hostile hit is not a Molten Giant: the clear started before we zoned in (saved lock, reload),
+			--so it can't be timed. Stop listening instead of filtering every raid damage event for the rest of the run.
+			self:UnregisterShortTermEvents()
 		end
 	end
 
-	function mod:SPELL_DAMAGE(_, _, _, destGUID)
-		checkFirstPull(self, destGUID or 0)
+	function mod:SPELL_DAMAGE(_, _, _, destGUID, _, destFlags)
+		checkFirstPull(self, destGUID, destFlags)
 	end
 	mod.SPELL_MISSED = mod.SPELL_DAMAGE
 
-	function mod:SPELL_PERIODIC_DAMAGE(_, _, _, destGUID)
-		checkFirstPull(self, destGUID or 0)
+	function mod:SPELL_PERIODIC_DAMAGE(_, _, _, destGUID, _, destFlags)
+		checkFirstPull(self, destGUID, destFlags)
 	end
 	mod.SPELL_PERIODIC_MISSED = mod.SPELL_PERIODIC_DAMAGE
 
-	function mod:SWING_DAMAGE(_, _, _, destGUID)
-		checkFirstPull(self, destGUID or 0)
+	function mod:SWING_DAMAGE(_, _, _, destGUID, _, destFlags)
+		checkFirstPull(self, destGUID, destFlags)
 	end
 	mod.SWING_MISSED = mod.SWING_DAMAGE
 

@@ -9,14 +9,14 @@ mod:SetModelID(11986)
 mod:RegisterCombat("combat")
 
 mod:RegisterEventsInCombat(
-	"SPELL_CAST_SUCCESS 20553"
+	"SPELL_CAST_SUCCESS 19798"
 )
 
---TODO, quake not in combat log on classic?
-local warnQuake		= mod:NewSpellAnnounce(20553)
+-- AzerothCore's Golemagg casts Earthquake 19798 below 10% health (classic ID 20553 is never used)
+local warnQuake		= mod:NewSpellAnnounce(19798)
 
-function mod:SPELL_AURA_APPLIED(args)
-	if args.spellId == 20553 then
+function mod:SPELL_CAST_SUCCESS(args)
+	if args.spellId == 19798 then
 		warnQuake:Show()
 	end
 end

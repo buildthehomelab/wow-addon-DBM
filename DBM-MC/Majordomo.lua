@@ -8,10 +8,13 @@ mod:SetEncounterID(671)
 mod:SetModelID(12029)
 
 mod:RegisterCombat("combat")
---mod:RegisterKill("yell", L.Kill)
+-- AzerothCore: Majordomo submits (turns friendly) instead of dying once his eight Flamewakers are dead,
+-- so the kill is counted from the add deaths rather than boss deaths.
+mod:DisableBossDeathKill()
 
 mod:RegisterEventsInCombat(
-	"SPELL_CAST_SUCCESS 20619 21075 20534"
+	"SPELL_CAST_SUCCESS 20619 21075 20534 20618",
+	"UNIT_DIED"
 )
 
 --[[
@@ -28,7 +31,11 @@ local timerDamageShield		= mod:NewBuffActiveTimer(10, 21075, nil, nil, nil, 5, n
 local timerTeleportCD		= mod:NewCDTimer(25, 20534, nil, nil, nil, 5, nil, DBM_COMMON_L.TANK_ICON)--25-30
 local timerShieldCD			= mod:NewTimer(30.3, "timerShieldCD", nil, nil, nil, 6, nil, DBM_COMMON_L.DAMAGE_ICON)
 
+local ADD_COUNT = 8 -- 4 Flamewaker Healers (11663) + 4 Flamewaker Elites (11664)
+local deadAdds = {}
+
 function mod:OnCombatStart(delay)
+	table.wipe(deadAdds)
 	timerTeleportCD:Start(19.4-delay)
 	timerShieldCD:Start(27.8-delay)--27-30
 end
@@ -48,8 +55,22 @@ function mod:SPELL_CAST_SUCCESS(args)
 		end
 		timerDamageShield:Start()
 		timerShieldCD:Start()
-	elseif args.spellId == 20534 then
+	elseif args.spellId == 20534 or args.spellId == 20618 then -- 20618: AzerothCore's random-target teleport
 		warnTeleport:Show(args.destName)
 		timerTeleportCD:Start()
+	end
+end
+
+function mod:UNIT_DIED(args)
+	local cid = self:GetCIDFromGUID(args.destGUID)
+	if (cid == 11663 or cid == 11664) and not deadAdds[args.destGUID] then
+		deadAdds[args.destGUID] = true
+		local count = 0
+		for _ in pairs(deadAdds) do
+			count = count + 1
+		end
+		if count >= ADD_COUNT then
+			DBM:EndCombat(self)
+		end
 	end
 end
