@@ -27,7 +27,9 @@ mod:SendSync("IsMCStarted")
 
 do
 	local startCreatureIds = {
-		[11658] = true--Molten Giant
+		[11658] = true,--Molten Giant
+		[11668] = true,--Firelord (entrance packs with the giants)
+		[12101] = true,--Lava Surger (patrols the first tunnel)
 	}
 	local bband = bit.band
 	local COMBATLOG_OBJECT_REACTION_HOSTILE = COMBATLOG_OBJECT_REACTION_HOSTILE or 0x00000040

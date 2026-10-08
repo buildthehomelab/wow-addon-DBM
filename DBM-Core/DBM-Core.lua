@@ -813,7 +813,7 @@ do
 			--end
 
 			if not (isUnitEvent and modEvents and modEvents[event] and not checkEntry(modEvents[event], ...)) then
-				if handler and (not zones or zones[LastInstanceMapID] or zones[LastInstanceZoneName]) and not (not v.isTrashModBossFightAllowed and v.isTrashMod and #inCombat > 0) then
+				if handler and (not zones or zones[LastInstanceMapID] or zones[LastInstanceZoneName]) and not (not v.isTrashModBossFightAllowed and v.isTrashMod and #inCombat > 0) and not (v.addon and v.addon.inactive) then
 					handler(v, ...)
 				end
 			end
@@ -1323,7 +1323,12 @@ do
 		end
 	end
 
+	local coreDBT = DBT -- StatusBarTimers\DBT.lua runs before this file
 	function DBM:ADDON_LOADED(modname)
+		if modname == "DBM-StatusBarTimers" and DBT ~= coreDBT then
+			-- Old stand-alone folder still installed (it's disabled for the next login): keep our bars
+			DBT = coreDBT
+		end
 		if modname == "DBM-Core" and not isLoaded then
 			dbmToc = tonumber(GetAddOnMetadata("DBM-Core", "X-Min-Interface"))
 			isLoaded = true
@@ -3266,17 +3271,24 @@ do
 		return checkEntry(realmList, checkRealm) or (virtualRealm and checkEntry(realmList, virtualRealm)) or false
 	end
 
+	local function realmAllows(v, checkRealm, virtualRealm)
+		return not realmMatches(v.blockRealm, checkRealm, virtualRealm) and (v.realm[1] == "" or realmMatches(v.realm, checkRealm, virtualRealm))
+	end
+
 	function DBM:LoadModsOnDemand(checkTable, checkValue, checkRealm)
 		self:Debug("LoadModsOnDemand fired")
 		local virtualRealm = self:IsIP40Raid() and "IP40" or nil
+		-- Packs sharing a zone (vanilla vs WotLK Naxxramas/Onyxia) can both be loaded once their expansion
+		-- addons are; the realm rules also decide, per zone, which pack's mods may run (see StartCombat/handleEvent).
+		for _, v in ipairs(self.AddOns) do
+			v.inactive = not realmAllows(v, checkRealm, virtualRealm)
+		end
 		for _, v in ipairs(self.AddOns) do
 			local modTable = v[checkTable]
-			local modRealm = v.realm
-			local modBlockRealm = v.blockRealm
 			local _, _, _, enabled = GetAddOnInfo(v.addonName)
 			--self:Debug(v.modId.." is "..enabled, 2)
 			if not IsAddOnLoaded(v.addonName) and modTable and checkEntry(modTable, checkValue) then
-				if not realmMatches(modBlockRealm, checkRealm, virtualRealm) and (modRealm[1] == "" or realmMatches(modRealm, checkRealm, virtualRealm)) then -- custom realm check (for non-WotLK specific mods, like Vanilla Onyxia). Toc only filled if necessary for conditional mod load based on realm
+				if not v.inactive then -- custom realm check (for non-WotLK specific mods, like Vanilla Onyxia). Toc only filled if necessary for conditional mod load based on realm
 					if enabled then
 						self:LoadMod(v)
 					else
@@ -4966,6 +4978,7 @@ do
 		cSyncReceived = 0
 		if not checkEntry(inCombat, mod) then
 			if not mod.Options.Enabled then return end
+			if mod.addon and mod.addon.inactive then return end -- pack not used in this zone (vanilla vs WotLK Naxx/Onyxia)
 			--HACK: makes sure that we don't detect a false pull if the event fires again when the boss dies...
 			if mod.lastKillTime and GetTime() - mod.lastKillTime < 10 then return end
 			if not mod.combatInfo then return end
@@ -5837,7 +5850,9 @@ local ip40AreaIds = {
 }
 function DBM:IsIP40Raid()
 	local _, instanceType, difficulty, _, _, _, isDynamicInstance = GetInstanceInfo()
-	return instanceType == "raid" and not isDynamicInstance and difficulty == 3 and ip40AreaIds[GetCurrentMapAreaID()] or false
+	-- While the world map is open it may show another zone; then trust the area cached on zone change
+	local areaId = WorldMapFrame:IsShown() and LastInstanceMapID or GetCurrentMapAreaID()
+	return instanceType == "raid" and not isDynamicInstance and difficulty == 3 and ip40AreaIds[areaId] or false
 end
 
 function DBM:GetCurrentInstanceDifficulty()

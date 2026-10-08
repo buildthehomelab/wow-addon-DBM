@@ -34,6 +34,15 @@ local timerShieldCD			= mod:NewTimer(30.3, "timerShieldCD", nil, nil, nil, 6, ni
 local ADD_COUNT = 8 -- 4 Flamewaker Healers (11663) + 4 Flamewaker Elites (11664)
 local deadAdds = {}
 
+-- AzerothCore makes Majordomo friendly when the last add dies; this still ends the fight as a kill
+-- if an add death was missed (died before the pull was detected or out of combat-log range).
+local function checkSubmitted(self)
+	local uId = self:GetUnitIdFromCID(12018)
+	if uId and not UnitCanAttack("player", uId) and not UnitIsDead(uId) then
+		DBM:EndCombat(self)
+	end
+end
+
 function mod:OnCombatStart(delay)
 	table.wipe(deadAdds)
 	timerTeleportCD:Start(19.4-delay)
@@ -71,6 +80,9 @@ function mod:UNIT_DIED(args)
 		end
 		if count >= ADD_COUNT then
 			DBM:EndCombat(self)
+		else
+			self:Unschedule(checkSubmitted)
+			self:Schedule(1.5, checkSubmitted, self)
 		end
 	end
 end

@@ -32,6 +32,15 @@ This is a modified version of DBM-Warmane. The changes:
   (one subfolder per raid or dungeon pack). `DBM-StatusBarTimers` and `DBM-SpellTimers` are part of
   `DBM-Core`. DBM-Core reads the pack metadata from `DBM-Core/PackManifest.lua` and loads the expansion
   addon that holds a pack. `tools/merge_packs.py` builds this layout from a stock release.
+
+## Updating to a new DBM-Warmane release
+
+`tools/merge_packs.py` only builds the folder layout. It works on a stock tree and knows nothing about our fixes.
+
+1. Unpack the new release over a clean checkout of the stock import (the 36 folders) and commit it.
+2. Run `python3 tools/merge_packs.py` from the repo root and commit.
+3. Re-apply the fixes from the "Fix DBM for AzerothCore and Individual Progression" commit at their new paths
+   (`DBM-MC/` is now `DBM-Classic/MC/`). The script adds the `IP40` realm tags itself.
 - **Difficulty.** Removed the Warmane Timewalking check. A 25-man raid-difficulty setting made every 40-man raid
   count as Timewalking. Unknown difficulties no longer break pull and kill statistics.
 - **Individual Progression.** Naxxramas 40 and Onyxia 40 (the 10-man heroic slot on our realm) count as 40-man and

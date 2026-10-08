@@ -51,6 +51,14 @@ CORE_EXTRAS = {
     "DBM-StatusBarTimers": "StatusBarTimers",
     "DBM-SpellTimers": "SpellTimers",
 }
+# Individual Progression runs 40-man Naxxramas/Onyxia on the WotLK maps (virtual realm "IP40", see
+# DBM:LoadModsOnDemand): the vanilla packs load there, the WotLK packs stay out.
+REALM_TAGS = {
+    "DBM-VanillaNaxx": ("X-DBM-Mod-LoadRealm", "IP40"),
+    "DBM-VanillaOnyxia": ("X-DBM-Mod-LoadRealm", "IP40"),
+    "DBM-Naxx": ("X-DBM-Mod-BlockRealm", "IP40"),
+    "DBM-Onyxia": ("X-DBM-Mod-BlockRealm", "IP40"),
+}
 TITLE_PREFIX = "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0"
 
 
@@ -72,8 +80,19 @@ def read_toc(folder):
         elif line.startswith("#") or line.startswith("--"):
             continue  # comments (one stock toc uses "--")
         else:
-            files.append(line)
+            files.append(real_case(folder, line))
     return meta, files
+
+
+def real_case(folder, rel):
+    """Return a toc entry spelled the way the file is on disk (some stock tocs differ by case)."""
+    parts, cur, out = rel.replace("/", "\\").split("\\"), folder, []
+    for part in parts:
+        names = os.listdir(cur) if os.path.isdir(cur) else []
+        match = part if part in names else next((n for n in names if n.lower() == part.lower()), part)
+        out.append(match)
+        cur = os.path.join(cur, match)
+    return "\\".join(out)
 
 
 def meta_get(meta, key, default=None):
@@ -81,6 +100,22 @@ def meta_get(meta, key, default=None):
         if k == key:
             return v
     return default
+
+
+def add_realm_tag(pack, meta):
+    if pack not in REALM_TAGS:
+        return meta
+    key, tag = REALM_TAGS[pack]
+    out, found = [], False
+    for k, v in meta:
+        if k == key:
+            found = True
+            if tag not in [t.strip() for t in v.split(",")]:
+                v = f"{v}, {tag}" if v else tag
+        out.append((k, v))
+    if not found:
+        out.append((key, tag))
+    return out
 
 
 def lua_str(s):
@@ -133,6 +168,7 @@ def merge_group(group, g):
     packs = []
     for pack in g["packs"]:
         meta, files = read_toc(pack)
+        meta = add_realm_tag(pack, meta)
         packs.append((float(meta_get(meta, "X-DBM-Mod-Sort", "1e9")), pack, meta, files))
     for _, pack, meta, files in sorted(packs):
         for key, dest in (("SavedVariables", saved), ("SavedVariablesPerCharacter", saved_char)):
@@ -156,7 +192,7 @@ def merge_group(group, g):
         f"## SavedVariablesPerCharacter: {', '.join(saved_char)}",
         "## X-DBM-Packs: 1",
     ] + lines
-    with open(os.path.join(group, group + ".toc"), "w", encoding="utf-8", newline="\r\n") as f:
+    with open(os.path.join(group, group + ".toc"), "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(toc) + "\n")
     return manifest
 
@@ -203,8 +239,17 @@ def fold_core_extras():
                         + "\n".join(file_lists["DBM-StatusBarTimers"])
                         + "\n\n# Packs inside DBM-Classic/BC/WotLK/Extras\nPackManifest.lua\n\n# Pre-core modules\n")
     text = text.rstrip("\n") + "\n\n# Spell timers (was DBM-SpellTimers)\n" + "\n".join(file_lists["DBM-SpellTimers"]) + "\n"
-    with open(core_toc, "w", encoding="utf-8", newline="\r\n") as f:
+    with open(core_toc, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
+
+
+def fix_toc_case(addon):
+    """Spell the file entries of an addon we don't merge the way the files are on disk."""
+    path = os.path.join(addon, addon + ".toc")
+    lines = open(path, encoding="utf-8-sig").read().split("\n")
+    out = [ln if not ln.strip() or ln.lstrip().startswith(("#", "--")) else real_case(addon, ln.strip()) for ln in lines]
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(out))
 
 
 def main():
@@ -215,6 +260,7 @@ def main():
     manifests = [(group, merge_group(group, g)) for group, g in GROUPS.items()]
     write_manifest(manifests)
     fold_core_extras()
+    fix_toc_case("DBM-GUI")
     print("done:", ", ".join(sorted(d for d in os.listdir(".") if d.startswith("DBM-"))))
 
 
