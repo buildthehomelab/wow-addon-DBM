@@ -10,9 +10,8 @@
 ## Title-esMX:|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff0055FF Núcleo|r
 ## Title-frFR:|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff0055FF Noyau|r
 ## Notes: Deadly Boss Mods
-## Dependencies: DBM-StatusBarTimers
 ## OptionalDeps: LibStub, CallbackHandler-1.0, LibSharedMedia-3.0, LibChatAnims, LibDBIcon-1.0, LibDeflate, LibSerialize, LibGroupTalents-1.0, LibTalentQuery-1.0, ElvUI
-## SavedVariables: DBM_AllSavedOptions, DBM_MinimapIcon
+## SavedVariables: DBM_AllSavedOptions, DBM_MinimapIcon, DBT_AllPersistentOptions, DBM_SpellTimers_Settings
 ## SavedVariablesPerCharacter: DBM_UsedProfile, DBM_UseDualProfile, DBM_CharSavedRevision, DBM_SavedOptions
 ## LoadOnDemand: 0
 ## DefaultState: enabled
@@ -65,6 +64,12 @@ commonlocal.fr.lua
 commonlocal.kr.lua
 commonlocal.ru.lua
 
+# Status bar timers (was DBM-StatusBarTimers)
+StatusBarTimers\DBT.lua
+
+# Packs inside DBM-Classic/BC/WotLK/Extras
+PackManifest.lua
+
 # Pre-core modules
 modules\Modules.lua
 
@@ -95,3 +100,14 @@ modules\Sounds.lua
 modules\UpdateReminder.lua
 
 modules\objects\Localization.lua
+
+# Spell timers (was DBM-SpellTimers)
+SpellTimers\localization.en.lua
+SpellTimers\localization.de.lua
+SpellTimers\localization.cn.lua
+SpellTimers\localization.ru.lua
+SpellTimers\localization.tw.lua
+SpellTimers\localization.kr.lua
+SpellTimers\localization.es.lua
+SpellTimers\localization.fr.lua
+SpellTimers\SpellTimers.lua

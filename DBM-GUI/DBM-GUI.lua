@@ -816,7 +816,7 @@ do
 				-- Create a Panel for "Naxxramas" "Eye of Eternity" ...
 				addon.panel = category[cat]:CreateNewPanel(addon.name or "Error: No-modId")
 
-				if not IsAddOnLoaded(addon.modId) then
+				if not IsAddOnLoaded(addon.addonName) then
 					local button = addon.panel:CreateButton(L.Button_LoadMod, 200, 30)
 					button.modid = addon
 					button.headline = addon.panel:CreateText(L.BossModLoad_now, 350, nil, nil, "CENTER")
@@ -837,7 +837,7 @@ do
 				end
 			end
 
-			if addon.panel and addon.subTabs and IsAddOnLoaded(addon.modId) then
+			if addon.panel and addon.subTabs and IsAddOnLoaded(addon.addonName) then
 				-- Create a Panel for "Arachnid Quarter" "Plague Quarter" ...
 				if not addon.subPanels then
 					addon.subPanels = {}
