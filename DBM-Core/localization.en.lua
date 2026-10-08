@@ -22,6 +22,7 @@ L.COPY_URL_DIALOG_NEWS					= "To read latest news, visit link below"
 L.UPDATEREMINDER_URL					= "https://github.com/Zidras/DBM-Warmane/"
 
 L.LOAD_MOD_ERROR						= "Error while loading boss mods for %s: %s"
+L.OLD_FOLDER_REPLACED			= "The folder %s is now part of %s and has been disabled. Delete Interface\\AddOns\\%s, then type /reload."
 L.LOAD_MOD_SUCCESS						= "Loaded '%s' mods. For more options such as custom alert sounds and personalized warning notes, type /dbm."
 -- L.LOAD_MOD_COMBAT						= "Loading of '%s' delayed until you leave combat"
 L.LOAD_GUI_ERROR						= "Could not load GUI: %s"

@@ -119,7 +119,7 @@ StyleDropDown.myheight = 0
 local Textures = DBM_GUI:MixinSharedMedia3("statusbar", {
 	{
 		text	= DEFAULT,
-		value	= "Interface\\AddOns\\DBM-StatusBarTimers\\textures\\default.blp"
+		value	= "Interface\\AddOns\\DBM-Core\\StatusBarTimers\\textures\\default.blp"
 	},
 	{
 		text	= "Blizzard",

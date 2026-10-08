@@ -1314,6 +1314,15 @@ do
 		end
 	end
 
+	-- Reads a pack's toc metadata from PackManifest.lua, preferring the client-locale variant
+	-- ("X-DBM-Mod-Name-deDE") like a real toc would.
+	local function packMetaGetter(meta)
+		local locale = GetLocale()
+		return function(key)
+			return meta[key .. "-" .. locale] or meta[key]
+		end
+	end
+
 	function DBM:ADDON_LOADED(modname)
 		if modname == "DBM-Core" and not isLoaded then
 			dbmToc = tonumber(GetAddOnMetadata("DBM-Core", "X-Min-Interface"))
@@ -1336,69 +1345,89 @@ do
 			end
 			self.Voices = { {text = "None",value = "None"}, }--Create voice table, with default "None" value
 			self.VoiceVersions = {}
+			-- Old stand-alone folders that now live inside a merged addon. Left installed they would
+			-- register their boss mods twice (or replace DBT), so they are disabled and reported.
+			local replacedBy = {["DBM-StatusBarTimers"] = "DBM-Core", ["DBM-SpellTimers"] = "DBM-Core"}
+			for group, groupPacks in pairs(private.packManifest) do
+				for _, pack in ipairs(groupPacks) do
+					replacedBy[pack.modId] = group
+				end
+			end
 			for i = 1, GetNumAddOns() do
 				local addonName, _, _, enabled = GetAddOnInfo(i)
-				if GetAddOnMetadata(i, "X-DBM-Mod") then
+				-- A merged addon (DBM-Classic, DBM-BC, ...) holds several packs; their metadata is in PackManifest.lua
+				local packs = GetAddOnMetadata(i, "X-DBM-Packs") and private.packManifest[addonName]
+				if replacedBy[addonName] then
+					if enabled then
+						DisableAddOn(addonName)
+					end
+					AddMsg(self, L.OLD_FOLDER_REPLACED:format(addonName, replacedBy[addonName], addonName))
+				elseif packs or GetAddOnMetadata(i, "X-DBM-Mod") then
 					if enabled then
 						if checkEntry(bannedMods, addonName) then
 							AddMsg(self, "The mod " .. addonName .. " is deprecated and will not be available. Please remove the folder " .. addonName .. " from your Interface" .. (IsWindowsClient() and "\\" or "/") .. "AddOns folder to get rid of this message. Check for an updated version of " .. addonName .. " that is compatible with your game version.")
 						else
-							local minToc = tonumber(GetAddOnMetadata(i, "X-Min-Interface") or 0)
+							for _, pack in ipairs(packs or {{modId = addonName}}) do
+								local modId = pack.modId
+								local getMeta = pack.meta and packMetaGetter(pack.meta) or function(key) return GetAddOnMetadata(i, key) end
+								local minToc = tonumber(getMeta("X-Min-Interface") or 0)
 
-							tinsert(self.AddOns, {
-								sort			= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-Sort") or math.huge) or math.huge,
-								type			= GetAddOnMetadata(i, "X-DBM-Mod-Type") or "OTHER",
-								category		= GetAddOnMetadata(i, "X-DBM-Mod-Category") or "Other",
-								statTypes		= GetAddOnMetadata(i, "X-DBM-StatTypes") or "",
-								oldOptions		= tonumber(GetAddOnMetadata(i, "X-DBM-OldOptions") or 0) == 1,
-								name			= GetAddOnMetadata(i, "X-DBM-Mod-Name") or "",
-								zone			= {strsplit(",", GetAddOnMetadata(i, "X-DBM-Mod-LoadZone") or CL.UNKNOWN)},
-								mapId			= {strsplit(",", GetAddOnMetadata(i, "X-DBM-Mod-MapID") or "")},
-								realm			= {strsplit(",", GetAddOnMetadata(i, "X-DBM-Mod-LoadRealm") or "")},
-								blockRealm		= {strsplit(",", GetAddOnMetadata(i, "X-DBM-Mod-BlockRealm") or "None")}, -- meant to prevent double load by blocking mod if it exists in different expansions
-								subTabs			= GetAddOnMetadata(i, "X-DBM-Mod-SubCategoriesID") and {strsplit(",", GetAddOnMetadata(i, "X-DBM-Mod-SubCategoriesID"))} or GetAddOnMetadata(i, "X-DBM-Mod-SubCategories") and {strsplit(",", GetAddOnMetadata(i, "X-DBM-Mod-SubCategories"))},
-								oneFormat		= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-Has-Single-Format") or 0) == 1, -- Deprecated
-								hasLFR			= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-Has-LFR") or 0) == 1, -- Deprecated
-								hasChallenge	= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-Has-Challenge") or 0) == 1, -- Deprecated
-								hasHeroic		= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-Has-Heroic-Mode") or 1) == 1, -- Deprecated
-								noHeroic		= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-No-Heroic") or 0) == 1, -- Deprecated
-								hasMythic		= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-Has-Mythic") or 0) == 1, -- Deprecated
-								hasTimeWalker	= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-Has-TimeWalker") or 0) == 1, -- Deprecated
-								noStatistics	= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-No-Statistics") or 0) == 1,
-								isWorldBoss		= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-World-Boss") or 0) == 1,
-								isExpedition	= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-Expedition") or 0) == 1,
-								minRevision		= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-MinCoreRevision") or 0),
-								minExpansion	= tonumber(GetAddOnMetadata(i, "X-DBM-Mod-MinExpansion") or 0),
-								minToc			= minToc,
-								modId			= addonName,
-							})
-							for k, _ in ipairs(self.AddOns[#self.AddOns].zone) do
-								self.AddOns[#self.AddOns].zone[k] = (self.AddOns[#self.AddOns].zone[k]):trim()
-							end
-							for j = #self.AddOns[#self.AddOns].mapId, 1, -1 do
-								local id = tonumber(self.AddOns[#self.AddOns].mapId[j])
-								if id then
-									self.AddOns[#self.AddOns].mapId[j] = id
-								else
-									tremove(self.AddOns[#self.AddOns].mapId, j)
+								tinsert(self.AddOns, {
+									sort			= tonumber(getMeta("X-DBM-Mod-Sort") or math.huge) or math.huge,
+									type			= getMeta("X-DBM-Mod-Type") or "OTHER",
+									category		= getMeta("X-DBM-Mod-Category") or "Other",
+									statTypes		= getMeta("X-DBM-StatTypes") or "",
+									oldOptions		= tonumber(getMeta("X-DBM-OldOptions") or 0) == 1,
+									name			= getMeta("X-DBM-Mod-Name") or "",
+									zone			= {strsplit(",", getMeta("X-DBM-Mod-LoadZone") or CL.UNKNOWN)},
+									mapId			= {strsplit(",", getMeta("X-DBM-Mod-MapID") or "")},
+									realm			= {strsplit(",", getMeta("X-DBM-Mod-LoadRealm") or "")},
+									blockRealm		= {strsplit(",", getMeta("X-DBM-Mod-BlockRealm") or "None")}, -- meant to prevent double load by blocking mod if it exists in different expansions
+									subTabs			= getMeta("X-DBM-Mod-SubCategoriesID") and {strsplit(",", getMeta("X-DBM-Mod-SubCategoriesID"))} or getMeta("X-DBM-Mod-SubCategories") and {strsplit(",", getMeta("X-DBM-Mod-SubCategories"))},
+									oneFormat		= tonumber(getMeta("X-DBM-Mod-Has-Single-Format") or 0) == 1, -- Deprecated
+									hasLFR			= tonumber(getMeta("X-DBM-Mod-Has-LFR") or 0) == 1, -- Deprecated
+									hasChallenge	= tonumber(getMeta("X-DBM-Mod-Has-Challenge") or 0) == 1, -- Deprecated
+									hasHeroic		= tonumber(getMeta("X-DBM-Mod-Has-Heroic-Mode") or 1) == 1, -- Deprecated
+									noHeroic		= tonumber(getMeta("X-DBM-Mod-No-Heroic") or 0) == 1, -- Deprecated
+									hasMythic		= tonumber(getMeta("X-DBM-Mod-Has-Mythic") or 0) == 1, -- Deprecated
+									hasTimeWalker	= tonumber(getMeta("X-DBM-Mod-Has-TimeWalker") or 0) == 1, -- Deprecated
+									noStatistics	= tonumber(getMeta("X-DBM-Mod-No-Statistics") or 0) == 1,
+									isWorldBoss		= tonumber(getMeta("X-DBM-Mod-World-Boss") or 0) == 1,
+									isExpedition	= tonumber(getMeta("X-DBM-Mod-Expedition") or 0) == 1,
+									minRevision		= tonumber(getMeta("X-DBM-Mod-MinCoreRevision") or 0),
+									minExpansion	= tonumber(getMeta("X-DBM-Mod-MinExpansion") or 0),
+									minToc			= minToc,
+									modId			= modId,
+									addonName		= addonName, -- the addon folder that holds this pack (LoadAddOn target)
+								})
+								for k, _ in ipairs(self.AddOns[#self.AddOns].zone) do
+									self.AddOns[#self.AddOns].zone[k] = (self.AddOns[#self.AddOns].zone[k]):trim()
 								end
-							end
-							for k, _ in ipairs(self.AddOns[#self.AddOns].realm) do
-								self.AddOns[#self.AddOns].realm[k] = (self.AddOns[#self.AddOns].realm[k]):trim()
-							end
-							for k, _ in ipairs(self.AddOns[#self.AddOns].blockRealm) do
-								self.AddOns[#self.AddOns].blockRealm[k] = (self.AddOns[#self.AddOns].blockRealm[k]):trim()
-							end
-							if self.AddOns[#self.AddOns].subTabs then
-								local subTabs = self.AddOns[#self.AddOns].subTabs
-								for k, _ in ipairs(subTabs) do
-									self.AddOns[#self.AddOns].subTabs[k] = (subTabs[k]):trim()
+								for j = #self.AddOns[#self.AddOns].mapId, 1, -1 do
+									local id = tonumber(self.AddOns[#self.AddOns].mapId[j])
+									if id then
+										self.AddOns[#self.AddOns].mapId[j] = id
+									else
+										tremove(self.AddOns[#self.AddOns].mapId, j)
+									end
 								end
-							end
-							if GetAddOnMetadata(i, "X-DBM-Mod-LoadCID") then
-								local idTable = {strsplit(",", GetAddOnMetadata(i, "X-DBM-Mod-LoadCID"))}
-								for j = 1, #idTable do
-									loadcIds[tonumber(idTable[j]) or ""] = addonName
+								for k, _ in ipairs(self.AddOns[#self.AddOns].realm) do
+									self.AddOns[#self.AddOns].realm[k] = (self.AddOns[#self.AddOns].realm[k]):trim()
+								end
+								for k, _ in ipairs(self.AddOns[#self.AddOns].blockRealm) do
+									self.AddOns[#self.AddOns].blockRealm[k] = (self.AddOns[#self.AddOns].blockRealm[k]):trim()
+								end
+								if self.AddOns[#self.AddOns].subTabs then
+									local subTabs = self.AddOns[#self.AddOns].subTabs
+									for k, _ in ipairs(subTabs) do
+										self.AddOns[#self.AddOns].subTabs[k] = (subTabs[k]):trim()
+									end
+								end
+								if getMeta("X-DBM-Mod-LoadCID") then
+									local idTable = {strsplit(",", getMeta("X-DBM-Mod-LoadCID"))}
+									for j = 1, #idTable do
+										loadcIds[tonumber(idTable[j]) or ""] = modId
+									end
 								end
 							end
 						end
@@ -3062,17 +3091,17 @@ do
 	function DBM:CheckAvailableMods()
 		if _G["BigWigs"] then return end--If they are running two boss mods at once, lets assume they are only using DBM for a specific feature (such as brawlers) and not nag
 		if not self:IsTrivial() then
-			if oldDungeons[LastInstanceMapID] and not GetAddOnInfo("DBM-Party-BC") then
+			if oldDungeons[LastInstanceMapID] and not GetAddOnInfo("DBM-BC") then
 				AddMsg(self, L.MOD_AVAILABLE:format("DBM Dungeon mods"))
-			elseif (classicZones[LastInstanceMapID] or bcZones[LastInstanceMapID]) and not GetAddOnInfo("DBM-BlackTemple") then
+			elseif (classicZones[LastInstanceMapID] and not GetAddOnInfo("DBM-Classic")) or (bcZones[LastInstanceMapID] and not GetAddOnInfo("DBM-BC")) then
 				AddMsg(self, L.MOD_AVAILABLE:format("DBM BC/Vanilla mods"))
-			elseif wrathZones[LastInstanceMapID] and not GetAddOnInfo("DBM-Ulduar") then
+			elseif wrathZones[LastInstanceMapID] and not GetAddOnInfo("DBM-WotLK") then
 				AddMsg(self, L.MOD_AVAILABLE:format("DBM Wrath of the Lich King mods"))
 			end
 		end
 		local _, instanceType = GetInstanceInfo()
-		if (pvpZones[LastInstanceMapID] or instanceType == "arena") and not GetAddOnInfo("DBM-PvP") and not pvpShown then
-			AddMsg(self, L.MOD_AVAILABLE:format("DBM-PvP"))
+		if (pvpZones[LastInstanceMapID] or instanceType == "arena") and not GetAddOnInfo("DBM-Extras") and not pvpShown then
+			AddMsg(self, L.MOD_AVAILABLE:format("DBM-Extras"))
 			pvpShown = true
 		end
 	end
@@ -3244,9 +3273,9 @@ do
 			local modTable = v[checkTable]
 			local modRealm = v.realm
 			local modBlockRealm = v.blockRealm
-			local _, _, _, enabled = GetAddOnInfo(v.modId)
+			local _, _, _, enabled = GetAddOnInfo(v.addonName)
 			--self:Debug(v.modId.." is "..enabled, 2)
-			if not IsAddOnLoaded(v.modId) and modTable and checkEntry(modTable, checkValue) then
+			if not IsAddOnLoaded(v.addonName) and modTable and checkEntry(modTable, checkValue) then
 				if not realmMatches(modBlockRealm, checkRealm, virtualRealm) and (modRealm[1] == "" or realmMatches(modRealm, checkRealm, virtualRealm)) then -- custom realm check (for non-WotLK specific mods, like Vanilla Onyxia). Toc only filled if necessary for conditional mod load based on realm
 					if enabled then
 						self:LoadMod(v)
@@ -3287,7 +3316,7 @@ function DBM:LoadMod(mod, force)
 		self:SetCurrentSpecInfo()
 	end
 	self:Debug("LoadAddOn should have fired for "..mod.name, 2)
-	local loaded, reason = LoadAddOn(mod.modId)
+	local loaded, reason = LoadAddOn(mod.addonName)
 	if not loaded then
 		if reason then
 			if reason == "DISABLED" then
@@ -3305,7 +3334,12 @@ function DBM:LoadMod(mod, force)
 		if self.NewerVersion and showConstantReminder >= 1 then
 			AddMsg(self, L.UPDATEREMINDER_HEADER:format(self.NewerVersion, showRealDate(self.HighestRelease)))
 		end
-		self:LoadModOptions(mod.modId, InCombatLockdown(), true)
+		-- A merged addon brings in every pack it holds; set up options for all of them
+		for _, v in ipairs(self.AddOns) do
+			if v.addonName == mod.addonName and self.ModLists[v.modId] then
+				self:LoadModOptions(v.modId, InCombatLockdown(), true)
+			end
+		end
 		if DBM_GUI then
 			DBM_GUI:UpdateModList()
 		end
@@ -3334,12 +3368,14 @@ do
 		local guid = UnitGUID(uId)
 		if guid and DBM:IsCreatureGUID(guid) then
 			local cId = DBM:GetCIDFromGUID(guid)
-			for bosscId, addon in pairs(loadcIds) do
-				local _, _, _, enabled = GetAddOnInfo(addon)
-				if cId and bosscId and cId == bosscId and not IsAddOnLoaded(addon) and enabled ~= 0 then
+			for bosscId, modId in pairs(loadcIds) do
+				if cId and bosscId and cId == bosscId then
 					for _, v in ipairs(DBM.AddOns) do
-						if v.modId == addon then
-							DBM:LoadMod(v, true)
+						if v.modId == modId then
+							local _, _, _, enabled = GetAddOnInfo(v.addonName)
+							if not IsAddOnLoaded(v.addonName) and enabled ~= 0 then
+								DBM:LoadMod(v, true)
+							end
 							break
 						end
 					end

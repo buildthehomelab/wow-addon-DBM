@@ -1,0 +1,42 @@
+## Interface: 30300
+## Title:|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0PvP & Events|r
+## Notes: Battleground timers and holiday boss mods
+## LoadOnDemand: 1
+## RequiredDeps: DBM-Core
+## DefaultState: enabled
+## SavedVariables: DBMWorldEvents_AllSavedVars, DBMPvP_AllSavedVars
+## SavedVariablesPerCharacter: DBMWorldEvents_SavedStats
+## X-DBM-Packs: 1
+
+# DBM-WorldEvents
+WorldEvents\localization.en.lua
+WorldEvents\localization.ru.lua
+WorldEvents\localization.fr.lua
+WorldEvents\localization.tw.lua
+WorldEvents\localization.kr.lua
+WorldEvents\localization.de.lua
+WorldEvents\localization.es.lua
+WorldEvents\localization.mx.lua
+WorldEvents\localization.cn.lua
+WorldEvents\Holidays\ApothecaryTrio.lua
+WorldEvents\Holidays\Ahune.lua
+WorldEvents\Holidays\CorenDirebrew.lua
+WorldEvents\Holidays\HeadlessHorseman.lua
+WorldEvents\WarmaneEvents\TowerDefense.lua
+
+# DBM-PvP
+PvP\localization.en.lua
+PvP\localization.cn.lua
+PvP\localization.de.lua
+PvP\localization.es.lua
+PvP\localization.fr.lua
+PvP\localization.kr.lua
+PvP\localization.ru.lua
+PvP\localization.tw.lua
+PvP\PvPGeneral.lua
+PvP\Battlegrounds\Alterac.lua
+PvP\Battlegrounds\Arathi.lua
+PvP\Battlegrounds\EyeOfTheStorm.lua
+PvP\Battlegrounds\IsleOfConquest.lua
+PvP\Battlegrounds\StrandOfTheAncients.lua
+PvP\Battlegrounds\Warsong.lua
