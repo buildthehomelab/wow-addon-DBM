@@ -1,0 +1,210 @@
+local mod	= DBM:NewMod("Twins", "DBM-Sunwell")
+local L		= mod:GetLocalizedStrings()
+
+local sformat = string.format
+
+mod:SetRevision("20251101130127")
+mod:SetCreatureID(25165, 25166)
+mod:SetEncounterID(727)
+mod:SetUsedIcons(7, 8)
+mod:SetHotfixNoticeRev(20251101000000)
+
+mod:RegisterCombat("combat")
+
+mod:RegisterEventsInCombat(
+	"SPELL_AURA_APPLIED 45230 45347 45348",
+	"SPELL_AURA_APPLIED_DOSE 45347 45348",
+	"SPELL_CAST_START 45248 45329 45342",
+	"SPELL_DAMAGE 45256",
+	"SPELL_MISSED 45256",
+	"CHAT_MSG_RAID_BOSS_EMOTE",
+	"UNIT_DIED"
+)
+
+mod:SetBossHealthInfo(
+	25165, L.Sacrolash,
+	25166, L.Alythess
+)
+
+local warnBlade				= mod:NewSpellAnnounce(45248, 3)
+local warnBlow				= mod:NewTargetAnnounce(45256, 3)
+local warnConflag			= mod:NewTargetAnnounce(45333, 3)
+local warnNova				= mod:NewTargetAnnounce(45329, 3)
+
+local specWarnConflag		= mod:NewSpecialWarningYou(45333, nil, nil, nil, 1, 2)
+local specWarnConflagNear	= mod:NewSpecialWarningClose(45333, nil, nil, nil, 1, 2)
+local yellConflag			= mod:NewYell(45333, nil, false)
+local specWarnNova			= mod:NewSpecialWarningYou(45329, nil, nil, nil, 1, 2)
+local specWarnNovaNear		= mod:NewSpecialWarningClose(45329, nil, nil, nil, 1, 2)
+local yellNova				= mod:NewYell(45329)
+local specWarnPyro			= mod:NewSpecialWarningDispel(45230, "MagicDispeller", nil, 2, 1, 2)
+local specWarnDarkTouch		= mod:NewSpecialWarningStack(45347, false, 5, nil, 2, 1, 6)
+local specWarnFlameTouch	= mod:NewSpecialWarningStack(45348, false, 5, nil, nil, 1, 6)
+
+local timerBladeCD			= mod:NewNextTimer(10, 45248, nil, "Melee", 2, 2) -- Fixed timer. SPELL_CAST_START: (Onyxia: 25 wipe [2025-10-09]@[21:23:50]) - "Shadow Blades-45248-npc:25165-63 = pull:10.01/[Stage 1/0.00] 10.01, 10.01, 10.00, 10.02, 10.31, 10.00"
+local timerBlowCD			= mod:NewVarTimer("v23.5-26.5", 45256, nil, nil, nil, 3) -- ~3s varation [23.91-26.43]. SPELL_CAST_SUCCESS: (Onyxia: 25 wipe [2025-10-09]@[21:23:50] || 25 wipe [2025-10-09]@[21:44:08]) - "Confounding Blow-45256-npc:25165-63 = pull:26.37/[Stage 1/0.00] 26.37, 23.91" || "Confounding Blow-45256-npc:25165-63 = pull:25.68/[Stage 1/0.00] 25.68, 26.43"
+local timerConflagCD		= mod:NewVarTimer("v22.91-29", 45333, nil, nil, nil, 3, nil, nil, true) -- 2025/10/(20?) - Warmane Onyxia changed script again. 5s variation [22.91-28.94]. Added "keep" arg. SPELL_CAST_START: (Onyxia: 25 wipe [2025-10-09]@[21:23:50] || wipe [2025-10-09]@[21:31:02] || kill [2025-10-30]@[21:33:53]) - "Conflagration-45342-npc:25166-64 = pull:17.87/[Stage 1/0.00] 17.87, 30.88" || "Conflagration-45342-npc:25166-64 = pull:21.66/[Stage 1/0.00] 21.66, 26.73" || "Conflagration-45342-npc:25166-64 = pull:17.86/[Stage 1/0.00] 17.86, 22.91, Stage 2/12.34"
+local timerNovaCD			= mod:NewVarTimer("v20-24", 45329, nil, nil, nil, 3)-- ~4s varation [20.00-23.84]. SPELL_CAST_START: (Onyxia: 25 wipe [2025-10-09]@[21:44:08] || 25 wipe [2025-10-09]@[21:23:50] || wipe [2025-10-30]@[21:18:15]) - "Shadow Nova-45329-npc:25165-63 = pull:22.10/[Stage 1/0.00] 22.10, 21.96" || "Shadow Nova-45329-npc:25165-63 = pull:22.84/[Stage 1/0.00] 22.84, 23.84" || "Shadow Nova-45329-npc:25165-63 = pull:23.32/[Stage 1/0.00] 23.32, 20.00, Stage 2/0.58"
+local timerConflag			= mod:NewCastTimer(3.5, 45333, nil, false, 2)
+local timerNova				= mod:NewCastTimer(3.5, 45329, nil, false, 2)
+
+local berserkTimer			= mod:NewBerserkTimer(mod:IsTimewalking() and 300 or 360)
+
+mod:AddRangeFrameOption("12")
+mod:AddSetIconOption("ConflagIcon", 45333, false, false, {7})
+mod:AddSetIconOption("NovaIcon", 45329, false, false, {8})
+
+function mod:OnCombatStart(delay)
+	self:SetStage(1)
+	berserkTimer:Start(-delay)
+	timerConflagCD:Start(sformat("v%s-%s", 17.86-delay, 18.15-delay)) -- 2025/10/(20?) - Warmane Onyxia changed script again. Almost no variance (17.86-18.15)
+	timerBladeCD:Start(-delay)
+	if self.Options.RangeFrame then
+		DBM.RangeCheck:Show()
+	end
+end
+
+function mod:OnCombatEnd()
+	if self.Options.RangeFrame then
+		DBM.RangeCheck:Hide()
+	end
+end
+
+function mod:SPELL_AURA_APPLIED(args)
+	if args.spellId == 45230 and not args:IsDestTypePlayer() then
+		specWarnPyro:Show(args.destName)
+		specWarnPyro:Play("dispelboss")
+	elseif args.spellId == 45347 and args:IsPlayer() then
+		if (args.amount or 1) >= 5 and (args.amount % 5 == 0) then
+			specWarnDarkTouch:Show(args.amount)
+			specWarnDarkTouch:Play("stackhigh")
+		end
+	elseif args.spellId == 45348 and args:IsPlayer() then
+		if (args.amount or 1) >= 5 and (args.amount % 5 == 0) then
+			specWarnFlameTouch:Show(args.amount)
+			specWarnFlameTouch:Play("stackhigh")
+		end
+	end
+end
+mod.SPELL_AURA_APPLIED_DOSE = mod.SPELL_AURA_APPLIED
+
+function mod:SPELL_DAMAGE(_, _, _, _, destName, _, spellId)
+	if spellId == 45256 then
+		warnBlow:Show(destName)
+		timerBlowCD:Start()
+	end
+end
+
+function mod:SPELL_MISSED(_, _, _, _, _, _, spellId)
+	if spellId == 45256 then
+		timerBlowCD:Start()
+	end
+end
+
+function mod:ShadowNovaTarget(targetname)
+	if not targetname then return end
+	if targetname == UnitName("player") then
+		specWarnNova:Show()
+		specWarnNova:Play("targetyou")
+		yellNova:Yell()
+	elseif self:CheckNearby(2, targetname) then
+		specWarnNovaNear:Show(targetname)
+		specWarnNovaNear:Play("runaway")
+	else
+		warnNova:Show(targetname)
+	end
+	if self.Options.NovaIcon then
+		self:SetIcon(targetname, 7, 5)
+	end
+end
+
+function mod:ConflagrationTarget(targetname)
+	if not targetname then return end
+	if targetname == UnitName("player") then
+		specWarnConflag:Show()
+		specWarnConflag:Play("targetyou")
+		yellConflag:Yell()
+	elseif self:CheckNearby(2, targetname) then
+		specWarnConflagNear:Show(targetname)
+		specWarnConflagNear:Play("runaway")
+	else
+		warnConflag:Show(targetname)
+	end
+	if self.Options.ConflagIcon then
+		self:SetIcon(targetname, 8, 5)
+	end
+end
+
+function mod:SPELL_CAST_START(args)
+	if args.spellId == 45248 then
+		warnBlade:Show()
+		timerBladeCD:Start()
+	elseif args.spellId == 45329 then -- Shadow Nova
+		timerNova:Start(args.sourceGUID)
+		if self:GetCIDFromGUID(args.sourceGUID) == 25166 then -- Grand Warlock Alythess
+			timerNovaCD:Start("v25.06-25.19", args.sourceGUID) -- (Onyxia: [2025-10-23]@[21:38:36]) - "Shadow Nova-45329-npc:25166-64 = pull:48.39/[Stage 1/0.00, Stage 2/47.04] 1.35/48.39, 25.18, 25.19"
+		else
+			timerNovaCD:Start(args.sourceGUID)
+		end
+		self:BossTargetScanner(25165, "ShadowNovaTarget", 0.05, 6)
+	elseif args.spellId == 45342 then -- Conflagration
+		timerConflag:Start()
+		timerConflagCD:Start()
+		self:BossTargetScanner(self:GetCIDFromGUID(args.sourceGUID), "ConflagrationTarget", 0.05, 6)
+	end
+end
+
+-- CHAT_MSG_RAID_BOSS_EMOTE bugged on Warmane: https://www.warmane.com/bugtracker/report/106891
+function mod:CHAT_MSG_RAID_BOSS_EMOTE(msg, _, _, _, target)
+	if (msg == L.Nova or msg:find(L.Nova)) and target then
+		DBM:AddMsg("Nova emote is working again. Notify me (Zidras) on discord or open a bug report.")
+		target = DBM:GetUnitFullName(target)
+		timerNova:Start()
+		timerNovaCD:Start()
+		if target == UnitName("player") then
+			specWarnNova:Show()
+			specWarnNova:Play("targetyou")
+			yellNova:Yell()
+		elseif self:CheckNearby(2, target) then
+			specWarnNovaNear:Show(target)
+			specWarnNovaNear:Play("runaway")
+		else
+			warnNova:Show(target)
+		end
+		if self.Options.NovaIcon then
+			self:SetIcon(target, 7, 5)
+		end
+	elseif (msg == L.Conflag or msg:find(L.Conflag)) and target then
+		DBM:AddMsg("Conflagration emote is working again. Notify me (Zidras) on discord or open a bug report.")
+		target = DBM:GetUnitFullName(target)
+		timerConflag:Start()
+		timerConflagCD:Start()
+		if target == UnitName("player") then
+			specWarnConflag:Show()
+			specWarnConflag:Play("targetyou")
+			yellConflag:Yell()
+		elseif self:CheckNearby(2, target) then
+			specWarnConflagNear:Show(target)
+			specWarnConflagNear:Play("runaway")
+		else
+			warnConflag:Show(target)
+		end
+		if self.Options.ConflagIcon then
+			self:SetIcon(target, 8, 5)
+		end
+	end
+end
+
+function mod:UNIT_DIED(args)
+	local destCID = self:GetCIDFromGUID(args.destGUID)
+	if destCID == 25166 -- Grand Warlock Alythess
+	or destCID == 25165 -- Lady Sacrolash
+	then
+		timerConflagCD:Cancel()
+		timerNova:Cancel(args.destGUID)
+		timerNovaCD:Cancel(args.destGUID)
+		if self:GetStage(1) then
+			self:SetStage(2)
+		end
+	end
+end
