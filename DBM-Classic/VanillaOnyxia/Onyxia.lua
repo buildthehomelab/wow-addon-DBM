@@ -2,7 +2,10 @@ local mod	= DBM:NewMod("Onyxia-Vanilla", "DBM-VanillaOnyxia")
 local L		= mod:GetLocalizedStrings()
 
 mod:SetRevision("20231219231417")
-mod:SetCreatureID(10184)
+-- Individual Progression's Onyxia 40 is its own creature (301000), spawned only in the 10-man heroic slot.
+-- This pack loads on Warmane's Onyxia_old realm (stock Onyxia 10184) or in IP40 Onyxia's Lair.
+local onyxiaId = GetRealmName() == "Onyxia_old" and 10184 or 301000
+mod:SetCreatureID(onyxiaId)
 
 mod:RegisterCombat("combat")
 
@@ -13,7 +16,7 @@ mod:RegisterCombat("combat")
 mod:RegisterEventsInCombat(
 	"SPELL_CAST_START 68958 17086 18351 18564 18576 18584 18596 18609 18617 18435 68970 18431 18500 18392 68926",
 	"SPELL_CAST_SUCCESS 68959 68963",
-	"SPELL_DAMAGE 68867 69286",
+	"SPELL_DAMAGE 68867 69286 15847",
 	"CHAT_MSG_MONSTER_YELL",
 	"UNIT_DIED",
 	"UNIT_HEALTH boss1"
@@ -117,7 +120,7 @@ function mod:SPELL_CAST_SUCCESS(args)
 end
 
 function mod:SPELL_DAMAGE(_, _, _, destGUID, _, _, spellId)
-	if (spellId == 68867 or spellId == 69286) and destGUID == UnitGUID("player") and self.Options.SoundWTF3 then		-- Tail Sweep
+	if (spellId == 68867 or spellId == 69286 or spellId == 15847) and destGUID == UnitGUID("player") and self.Options.SoundWTF3 then		-- Tail Sweep (15847 = Individual Progression's Onyxia 40)
 		DBM:PlaySoundFile("Interface\\AddOns\\DBM-Classic\\VanillaOnyxia\\sounds\\watch-the-tail.ogg")
 	end
 end
@@ -139,10 +142,10 @@ function mod:UNIT_DIED(args)
 end
 
 function mod:UNIT_HEALTH(uId)
-	if self.vb.phase == 1 and not self.vb.warned_preP2 and self:GetUnitCreatureId(uId) == 10184 and UnitHealth(uId) / UnitHealthMax(uId) <= 0.70 then
+	if self.vb.phase == 1 and not self.vb.warned_preP2 and self:GetUnitCreatureId(uId) == onyxiaId and UnitHealth(uId) / UnitHealthMax(uId) <= 0.70 then
 		self.vb.warned_preP2 = true
 		warnPhase2Soon:Show()
-	elseif self.vb.phase == 2 and not self.vb.warned_preP3 and self:GetUnitCreatureId(uId) == 10184 and UnitHealth(uId) / UnitHealthMax(uId) <= 0.45 then
+	elseif self.vb.phase == 2 and not self.vb.warned_preP3 and self:GetUnitCreatureId(uId) == onyxiaId and UnitHealth(uId) / UnitHealthMax(uId) <= 0.45 then
 		self.vb.warned_preP3 = true
 		warnPhase3Soon:Show()
 		if self.Options.SoundWTF3 then
