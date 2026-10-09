@@ -39,12 +39,14 @@ This is a modified version of DBM-Warmane. The changes:
 
 1. Unpack the new release over a clean checkout of the stock import (the 36 folders) and commit it.
 2. Run `python3 tools/merge_packs.py` from the repo root and commit.
-3. Re-apply the fixes from the "Fix DBM for AzerothCore and Individual Progression" commit at their new paths
+3. Re-apply the fixes from the "Fix DBM for AzerothCore and Individual Progression" and "Detect Individual
+   Progression's Onyxia 40" commits at their new paths
    (`DBM-MC/` is now `DBM-Classic/MC/`). The script adds the `IP40` realm tags itself.
 - **Difficulty.** Removed the Warmane Timewalking check. A 25-man raid-difficulty setting made every 40-man raid
   count as Timewalking. Unknown difficulties no longer break pull and kill statistics.
 - **Individual Progression.** Naxxramas 40 and Onyxia 40 (the 10-man heroic slot on our realm) count as 40-man and
   load the vanilla mods instead of the WotLK ones (virtual realm `IP40` in the pack metadata).
+  The vanilla Onyxia mod looks for Individual Progression's own Onyxia (301000) and its Tail Sweep.
 - **Molten Core.** Golemagg's Quake uses AzerothCore's Earthquake. Majordomo counts as killed when his eight
   Flamewakers die (he submits instead of dying) and tracks his random-target teleport. The speed-clear
   listener stops once the clear can't be timed instead of filtering every damage event for the whole raid.
