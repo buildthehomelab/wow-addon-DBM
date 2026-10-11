@@ -1,6 +1,7 @@
 ## Interface: 30300
 ## Title:|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Classic|r
 ## Notes: Boss mods for Classic raids and dungeons
+## Version: 10.1.13_alpha
 ## LoadOnDemand: 1
 ## RequiredDeps: DBM-Core
 ## DefaultState: enabled

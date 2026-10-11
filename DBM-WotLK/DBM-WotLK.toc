@@ -1,6 +1,7 @@
 ## Interface: 30300
 ## Title:|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Wrath of the Lich King|r
 ## Notes: Boss mods for Wrath of the Lich King raids and dungeons
+## Version: 10.1.13_alpha
 ## LoadOnDemand: 1
 ## RequiredDeps: DBM-Core
 ## DefaultState: enabled
