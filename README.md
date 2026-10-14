@@ -1,8 +1,9 @@
-# DBM for our AzerothCore realm
+# DBM for AzerothCore with Individual Progression
 
 Deadly Boss Mods for the 3.3.5a client, based on [Zidras/DBM-Warmane](https://github.com/Zidras/DBM-Warmane)
-10.1.13_alpha and adapted to our AzerothCore server: playerbot raids, Individual Progression 40-man raids,
-and AzerothCore's boss scripts. The 36 stock folders are merged into 7.
+10.1.13_alpha and adapted to AzerothCore realms that run mod-playerbots and mod-individual-progression:
+playerbot raids, Individual Progression 40-man raids, and AzerothCore's boss scripts. The 36 stock folders
+are merged into 7.
 
 ## Install
 
@@ -33,18 +34,9 @@ This is a modified version of DBM-Warmane. The changes:
   `DBM-Core`. DBM-Core reads the pack metadata from `DBM-Core/PackManifest.lua` and loads the expansion
   addon that holds a pack. `tools/merge_packs.py` builds this layout from a stock release.
 
-## Updating to a new DBM-Warmane release
-
-`tools/merge_packs.py` only builds the folder layout. It works on a stock tree and knows nothing about our fixes.
-
-1. Unpack the new release over a clean checkout of the stock import (the 36 folders) and commit it.
-2. Run `python3 tools/merge_packs.py` from the repo root and commit.
-3. Re-apply the fixes from the "Fix DBM for AzerothCore and Individual Progression" and "Detect Individual
-   Progression's Onyxia 40" commits at their new paths
-   (`DBM-MC/` is now `DBM-Classic/MC/`). The script adds the `IP40` realm tags itself.
 - **Difficulty.** Removed the Warmane Timewalking check. A 25-man raid-difficulty setting made every 40-man raid
   count as Timewalking. Unknown difficulties no longer break pull and kill statistics.
-- **Individual Progression.** Naxxramas 40 and Onyxia 40 (the 10-man heroic slot on our realm) count as 40-man and
+- **Individual Progression.** Naxxramas 40 and Onyxia 40 (mod-individual-progression runs them in the 10-man heroic slot) count as 40-man and
   load the vanilla mods instead of the WotLK ones (virtual realm `IP40` in the pack metadata).
   The vanilla Onyxia mod looks for Individual Progression's own Onyxia (301000) and its Tail Sweep.
 - **Molten Core.** Golemagg's Quake uses AzerothCore's Earthquake. Majordomo counts as killed when his eight
@@ -54,11 +46,21 @@ This is a modified version of DBM-Warmane. The changes:
 - **Fixes.** Creature-ID lookups ignore non-string GUIDs. The backup raid-icon setter is chosen correctly.
   Toc file names match the files' case.
 
+## Updating to a new DBM-Warmane release
+
+`tools/merge_packs.py` only builds the folder layout. It works on a stock tree and knows nothing about this fork's fixes.
+
+1. Unpack the new release over a clean checkout of the stock import (the 36 folders) and commit it.
+2. Run `python3 tools/merge_packs.py` from the repo root and commit.
+3. Re-apply the fixes from the "Fix DBM for AzerothCore and Individual Progression" and "Detect Individual
+   Progression's Onyxia 40" commits at their new paths
+   (`DBM-MC/` is now `DBM-Classic/MC/`). The script adds the `IP40` realm tags itself.
+
 ## Patch Notes: Deadly Boss Mods
 Category: Addons
 
 - **Deadly Boss Mods** now ships as 7 folders instead of 36, with one boss-mod addon per expansion.
-- Molten Core warnings fit our server: **Majordomo Executus** counts as defeated when his Flamewakers fall, and **Golemagg's** Quake warning works.
+- Molten Core warnings match AzerothCore's boss scripts: **Majordomo Executus** counts as defeated when his Flamewakers fall, and **Golemagg's** Quake warning works.
 - 40-man raids are no longer labelled Timewalking, and Naxxramas 40 and Onyxia 40 use the classic boss mods.
 > Delete your old DBM folders before installing. Boss-mod options reset once.
 
