@@ -28,8 +28,8 @@ local specWarnDamageShield	= mod:NewSpecialWarningReflect(21075, false, nil, 2, 
 
 local timerMagicReflect		= mod:NewBuffActiveTimer(10, 20619, nil, nil, nil, 5, nil, DBM_COMMON_L.DAMAGE_ICON)
 local timerDamageShield		= mod:NewBuffActiveTimer(10, 21075, nil, nil, nil, 5, nil, DBM_COMMON_L.DAMAGE_ICON)
-local timerTeleportCD		= mod:NewCDTimer(25, 20534, nil, nil, nil, 5, nil, DBM_COMMON_L.TANK_ICON)--25-30
-local timerShieldCD			= mod:NewTimer(30.3, "timerShieldCD", nil, nil, nil, 6, nil, DBM_COMMON_L.DAMAGE_ICON)
+local timerTeleportCD		= mod:NewCDTimer(10, 20534, nil, nil, nil, 5, nil, DBM_COMMON_L.TANK_ICON)--AzerothCore: tank teleport at 15s, random at 25s, each every 30s
+local timerShieldCD			= mod:NewTimer(30, "timerShieldCD", nil, nil, nil, 6, nil, DBM_COMMON_L.DAMAGE_ICON)
 
 local ADD_COUNT = 8 -- 4 Flamewaker Healers (11663) + 4 Flamewaker Elites (11664)
 local deadAdds = {}
@@ -45,8 +45,8 @@ end
 
 function mod:OnCombatStart(delay)
 	table.wipe(deadAdds)
-	timerTeleportCD:Start(19.4-delay)
-	timerShieldCD:Start(27.8-delay)--27-30
+	timerTeleportCD:Start(15-delay)
+	timerShieldCD:Start(30-delay)--AzerothCore: 30, then every 30
 end
 
 function mod:SPELL_CAST_SUCCESS(args)
@@ -66,7 +66,8 @@ function mod:SPELL_CAST_SUCCESS(args)
 		timerShieldCD:Start()
 	elseif args.spellId == 20534 or args.spellId == 20618 then -- 20618: AzerothCore's random-target teleport
 		warnTeleport:Show(args.destName)
-		timerTeleportCD:Start()
+		-- the two teleports alternate: random follows the tank one by 10s, the tank one follows random by 20s
+		timerTeleportCD:Start(args.spellId == 20534 and 10 or 20)
 	end
 end
 

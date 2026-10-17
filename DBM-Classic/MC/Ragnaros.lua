@@ -31,7 +31,10 @@ local warnSonsOfFlameLeft	= mod:NewAddsLeftAnnounce(19629, 2, 19774) -- spellId 
 local timerWrathRag			= mod:NewCDTimer(25, 20566, nil, nil, nil, 2, nil, DBM_COMMON_L.IMPORTANT_ICON, true, mod:IsMelee() and 1, 4) -- ~10s variance [20.09-29.66] |||| EDIT 19/12/2023 - https://www.warmane.com/bugtracker/report/120178: 5s variance [25-30]. Added "keep" arg. (40N Lordaeron [2023-09-13]@[19:05:07] || 25N Onyxia [2023-11-25]@[17:36:30] |||| 25N Onyxia [2023-12-19]@[21:24:51] || 25N Onyxia [2023-12-19]@[21:43:01] || 25N Onyxia [2023-12-19]@[22:05:18]) - "Wrath of Ragnaros-20566-npc:11502-303 = pull:29.98, 28.56, 25.76, 22.10, 22.73, 23.72, 69.84, 27.74, 22.44, 29.00, 25.42, 21.28, 67.54, 24.18, 28.92" || pull:29.94, 22.16, 29.66, 28.36, 20.09, 24.10, Submerged/25.63, Emerged/89.99, 30.08/120.06/145.69 |||| pull:30.00, 28.58, 28.30, 25.31 || pull:29.99, 27.22, 29.88, 29.00, 29.52, 25.80, Submerged/9.53, Emerged/90.02, 30.03/120.05/129.58, 25.73, 29.77, Submerged/5.42, Emerged/90.05 || pull:29.99, 25.43, 26.70, 25.08, 27.40, 27.25, Submerged/18.87, Emerged/90.07
 local timerSubmerge			= mod:NewNextTimer(180, 21107, nil, nil, nil, 6, "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendBurrow.blp", nil, nil, 1, 5)
 local timerEmerge			= mod:NewNextTimer(90, 20568, nil, nil, nil, 6, "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendUnBurrow.blp", nil, nil, 1, 5)
-local timerCombatStart		= mod:NewCombatTimer(75.15)
+-- AzerothCore RP (boss_majordomo_executus.cpp): Summon Ragnaros (19774) cast -> 11.5 + 16.7 + 11.7 + 8.7 + 16.5 = 65.1s to Elemental Fire (19773)
+-- on Majordomo, then Ragnaros yells 5s later and becomes attackable 2.5s after that = 72.6s. The "Impudent whelps" yell comes before Majordomo's
+-- ~18 yard walk to the summon spot (~7.2s at walk speed), so from the yell it is ~79.8s.
+local timerCombatStart		= mod:NewCombatTimer(72.6)
 
 mod:AddRangeFrameOption("18", nil, "-Melee")
 
@@ -91,9 +94,9 @@ end
 
 function mod:SPELL_CAST_START(args)
 	local spellId = args.spellId
-	if spellId == 19774 and self:AntiSpam(5, 4) then
+	if spellId == 19774 and self:AntiSpam(5, 6) then
 		--This is still going to use a sync event because someone might start this RP from REALLY REALLY far away
-		self:SendSync("SummonRag")
+		self:SendSync("SummonRagCast")
 	elseif spellId == 20568 and self:IsInCombat() then -- Ragnaros Emerge ; needs boss engage check since Emerge will fire during his RP pre-IEEU script, and this was a regression after RegisterEventsInCombat was switched to RegisterEvents.
 		DBM:AddSpecialEventToTranscriptorLog("Emerged")
 --		self.vb.ragnarosEmerged = true
@@ -142,6 +145,8 @@ end
 
 function mod:OnSync(msg--[[, guid]])
 	if msg == "SummonRag" and self:AntiSpam(5, 2) then
+		timerCombatStart:Start(79.8)
+	elseif msg == "SummonRagCast" and self:AntiSpam(5, 5) then
 		timerCombatStart:Start()
 	elseif msg == "Submerge" and self:IsInCombat() then
 		DBM:AddSpecialEventToTranscriptorLog("Submerged")
@@ -162,15 +167,16 @@ function mod:OnSync(msg--[[, guid]])
 			emerged(self)
 		end--]]
 	elseif msg == "DomoDeath" and self:AntiSpam(5, 3) then
-		--The timer between yell/summon start and ragnaros being attackable is variable, but time between domo death and him being attackable is not.
-		--As such, we start lowest timer of that variation on the RP start, but adjust timer if it's less than 10 seconds at time domo dies
+		--The time between domo death and ragnaros being attackable is fixed: on AzerothCore it is 5s to his yell + 2.5s to attackable = 7.5s
 		local remaining = timerCombatStart:GetRemaining()
 		if remaining then
-			if remaining < 10 then
-				timerCombatStart:AddTime(10 - remaining)
-			elseif remaining > 10 then
-				timerCombatStart:RemoveTime(remaining - 10)
+			if remaining < 7.5 then
+				timerCombatStart:AddTime(7.5 - remaining)
+			elseif remaining > 7.5 then
+				timerCombatStart:RemoveTime(remaining - 7.5)
 			end
+		else
+			timerCombatStart:Start(7.5)
 		end
 	end
 end

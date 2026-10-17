@@ -42,6 +42,9 @@ This is a modified version of DBM-Warmane. The changes:
 - **Molten Core.** Golemagg's Quake uses AzerothCore's Earthquake. Majordomo counts as killed when his eight
   Flamewakers die (he submits instead of dying) and tracks his random-target teleport. The speed-clear
   listener stops once the clear can't be timed instead of filtering every damage event for the whole raid.
+  Boss timers follow AzerothCore's scripts: the Ragnaros pull countdown (72.6s from the summon cast, 7.5s
+  from Majordomo's death), Garr's Anti-Magic Pulse, Shazzrah's Gate and curse, Majordomo's alternating
+  teleports and shields, and the first casts and cooldowns of Lucifron, Gehennas and Baron Geddon.
 - **Bots.** Timer recovery only asks raid members known to run DBM; playerbots never answer.
 - **Fixes.** Creature-ID lookups ignore non-string GUIDs. The backup raid-icon setter is chosen correctly.
   Toc file names match the files' case.
@@ -52,8 +55,8 @@ This is a modified version of DBM-Warmane. The changes:
 
 1. Unpack the new release over a clean checkout of the stock import (the 36 folders) and commit it.
 2. Run `python3 tools/merge_packs.py` from the repo root and commit.
-3. Re-apply the fixes from the "Fix DBM for AzerothCore and Individual Progression" and "Detect Individual
-   Progression's Onyxia 40" commits at their new paths
+3. Re-apply the fixes from the "Fix DBM for AzerothCore and Individual Progression", "Detect Individual
+   Progression's Onyxia 40" and "Match Molten Core timers to AzerothCore" commits at their new paths
    (`DBM-MC/` is now `DBM-Classic/MC/`). The script adds the `IP40` realm tags itself.
 
 ## Patch Notes: Deadly Boss Mods
@@ -61,6 +64,7 @@ Category: Addons
 
 - **Deadly Boss Mods** now ships as 7 folders instead of 36, with one boss-mod addon per expansion.
 - Molten Core warnings match AzerothCore's boss scripts: **Majordomo Executus** counts as defeated when his Flamewakers fall, and **Golemagg's** Quake warning works.
+- Molten Core timers match our boss scripts. The **Ragnaros** pull countdown no longer runs past the moment he attacks, and **Garr**, **Shazzrah** and **Majordomo Executus** timers no longer run out seconds before the ability.
 - 40-man raids are no longer labelled Timewalking, and Naxxramas 40 and Onyxia 40 use the classic boss mods.
 > Delete your old DBM folders before installing. Boss-mod options reset once.
 
