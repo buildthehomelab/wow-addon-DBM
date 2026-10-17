@@ -27,7 +27,7 @@ local warnMC		= mod:NewTargetNoFilterAnnounce(20604, 4)
 local specWarnMC	= mod:NewSpecialWarningYou(20604, nil, nil, nil, 1, 2)
 local yellMC		= mod:NewYell(20604)
 
-local timerCurseCD	= mod:NewCDTimer(20.5, 19703, nil, nil, nil, 3, nil, DBM_COMMON_L.CURSE_ICON)--20-25N)
+local timerCurseCD	= mod:NewCDTimer(20, 19703, nil, nil, nil, 3, nil, DBM_COMMON_L.CURSE_ICON)--20-25N)
 local timerDoomCD	= mod:NewCDTimer(20, 19702, nil, nil, nil, 3, nil, DBM_COMMON_L.MAGIC_ICON)--20-25
 --local timerDoom		= mod:NewCastTimer(10, 19702, nil, nil, nil, 3, nil, DBM_COMMON_L.MAGIC_ICON)
 
@@ -37,8 +37,8 @@ mod.vb.lastIcon = 1
 
 function mod:OnCombatStart(delay)
 	self.vb.lastIcon = 1
-	timerDoomCD:Start(7-delay)--7-8
-	timerCurseCD:Start(12-delay)--12-15
+	timerDoomCD:Start(6-delay)--AzerothCore: 6-11
+	timerCurseCD:Start(11-delay)--AzerothCore: 11-14
 end
 
 function mod:MCTarget(targetname)

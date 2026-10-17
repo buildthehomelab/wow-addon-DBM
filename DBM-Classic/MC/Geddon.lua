@@ -32,7 +32,7 @@ local specWarnIgnite	= mod:NewSpecialWarningDispel(19659, "RemoveMagic", nil, ni
 local timerInfernoCD	= mod:NewCDTimer(21, 19695, nil, nil, nil, 2)--21-27.9
 local timerInferno		= mod:NewBuffActiveTimer(8, 19695, nil, nil, nil, 2)
 local timerIgniteManaCD	= mod:NewCDTimer(27, 19659, nil, nil, nil, 2)--27-33
-local timerBombCD		= mod:NewCDTimer(13.3, 20475, nil, nil, nil, 3)--13.3-18.3
+local timerBombCD		= mod:NewCDTimer(11, 20475, nil, nil, nil, 3)--AzerothCore: 11-16
 local timerBomb			= mod:NewTargetTimer(8, 20475, nil, nil, nil, 3)
 local timerArmageddon	= mod:NewCastTimer(8, 20478, nil, nil, nil, 2)
 
