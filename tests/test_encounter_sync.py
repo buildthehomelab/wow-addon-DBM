@@ -12,7 +12,7 @@ function GetRealmName() return realm or "Evermore" end
 function UnitGUID() return "player-guid" end
 function UnitName() return "Player" end
 function UnitIsDeadOrGhost() return false end
-function GetTime() return 0 end
+function GetTime() return simulatedTime or 0 end
 function GetSpellInfo(id) return "spell"..id end
 function table.wipe(t) for k in pairs(t) do t[k]=nil end end
 DBM.GetSpellInfo=function(_,id) return GetSpellInfo(id) end
@@ -108,9 +108,19 @@ class EncounterSync(unittest.TestCase):
  def test_thekal_preserves_first_resurrection_deadline(self):
   g=self.load('DBM-Classic/ZG/Thekal.lua');o=self.obj(g,'NewTimer','TimerSimulKill')
   g.mod.OnSync(g.mod,'PriestDied');self.assertEqual(self.start(o),10)
-  o.remaining=5;g.mod.OnSync(g.mod,'PriestDied');self.assertEqual(len(self.calls(o,'Start')),1)
-  o.remaining=0;g.mod.OnSync(g.mod,'PriestDied');self.assertEqual(len(self.calls(o,'Start')),2)
+  g.simulatedTime=5;o.remaining=5;g.mod.OnSync(g.mod,'PriestDied');self.assertEqual(len(self.calls(o,'Start')),1)
+  g.simulatedTime=10;o.remaining=0;g.mod.OnSync(g.mod,'PriestDied');self.assertEqual(len(self.calls(o,'Start')),2)
   g.mod.OnSync(g.mod,'TigerForm');self.assertEqual(g.mod.vb.phase,2);self.assertTrue(self.calls(o,'Stop'))
+ def test_thekal_hidden_bar_does_not_reset_logical_window(self):
+  g=self.load('DBM-Classic/ZG/Thekal.lua');g.mod.OnCombatStart(g.mod)
+  o=self.obj(g,'NewTimer','TimerSimulKill');g.mod.Options.TimerSimulKill=False
+  g.mod.OnSync(g.mod,'PriestDied');self.assertEqual(g.mod.vb.priestDeathDeadline,10)
+  # A disabled timer never creates a bar; it reports zero remaining even at t=9.
+  o.remaining=0;g.simulatedTime=9;g.mod.OnSync(g.mod,'PriestDied')
+  self.assertEqual(len(self.calls(o,'Start')),1);self.assertEqual(g.mod.vb.priestDeathDeadline,10)
+  g.simulatedTime=10;g.mod.OnSync(g.mod,'PriestDied')
+  self.assertEqual(len(self.calls(o,'Start')),2);self.assertEqual(g.mod.vb.priestDeathDeadline,20)
+  g.mod.OnSync(g.mod,'TigerForm');self.assertEqual(g.mod.vb.priestDeathDeadline,0)
  def test_galdarah_both_forms_and_charge_recovery(self):
   g=self.load('DBM-WotLK/Party-WotLK/Gundrak/Galdarah.lua');g.mod.OnCombatStart(g.mod,2)
   for _ in range(2):

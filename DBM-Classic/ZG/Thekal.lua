@@ -32,7 +32,10 @@ local timerBlind		= mod:NewTargetTimer(10, 21060, nil, nil, nil, 3)
 local timerGouge		= mod:NewTargetTimer(4, 12540, nil, nil, nil, 3)
 
 
+mod.vb.priestDeathDeadline = 0
+
 function mod:OnCombatStart()
+	self.vb.priestDeathDeadline = 0
 	self:SetStage(1)
 end
 
@@ -86,11 +89,14 @@ end
 function mod:OnSync(msg)
 	if not self:IsInCombat() then return end
 	if msg == "PriestDied" then
-		if timerSimulKill:GetRemaining() <= 0 then
+		local now = GetTime()
+		if now >= self.vb.priestDeathDeadline then
+			self.vb.priestDeathDeadline = now + 10
 			warnSimulKill:Show()
 			timerSimulKill:Start()
 		end
 	elseif msg == "TigerForm" and self.vb.phase < 2 then
+		self.vb.priestDeathDeadline = 0
 		self:SetStage(2)
 		warnPhase2:Show()
 		timerSimulKill:Stop()
