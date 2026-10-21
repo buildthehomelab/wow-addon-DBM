@@ -1,7 +1,7 @@
 local mod	= DBM:NewMod("Vaelastrasz", "DBM-BWL", 1)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision("20250929220131")
+mod:SetRevision("20261021000000")
 mod:SetCreatureID(13020)
 mod:SetEncounterID(611)
 mod:SetModelID(13992)
@@ -28,9 +28,10 @@ local specWarnAdrenalineOut	= mod:NewSpecialWarningMoveAway(18173, nil, nil, nil
 local yellAdrenaline		= mod:NewYell(18173, nil, false)
 local yellAdrenalineFades	= mod:NewShortFadesYell(18173)
 
-local timerAdrenalineCD		= mod:NewCDTimer(15.05, 18173, nil, nil, nil, 3) -- REVIEW! variance? (25m Onyxia: [2024-02-04]@[19:03:58]) - "Burning Adrenaline-23620-npc:13020-127 = pull:16.97, 15.05
+local timerAdrenalineCD		= mod:NewCDTimer(15, 18173, nil, nil, nil, 3)
 local timerAdrenaline		= mod:NewTargetTimer(20, 18173, nil, nil, nil, 3)
-local timerCombatStart		= mod:NewCombatTimer(44.08) -- [IEEU-YELL] - 770.50-726.42
+-- Opening yell to hostile: 12s + 12s + 17s in boss_vaelastrasz.cpp.
+local timerCombatStart		= mod:NewCombatTimer(41)
 
 mod:AddSetIconOption("SetIconOnDebuffTarget2", 18173, true, false, {8, 7, 6})
 
@@ -38,7 +39,7 @@ mod.vb.debuffIcon = 8
 
 function mod:OnCombatStart(delay)
 	self.vb.debuffIcon = 8
-	timerAdrenalineCD:Start(16.97-delay)
+	timerAdrenalineCD:Start(15-delay)
 end
 
 function mod:SPELL_CAST_START(args)

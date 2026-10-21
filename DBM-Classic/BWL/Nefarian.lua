@@ -1,7 +1,7 @@
 local mod	= DBM:NewMod("Nefarian-Classic", "DBM-BWL", 1)
 local L		= mod:GetLocalizedStrings()
 
-mod:SetRevision("20250929220131")
+mod:SetRevision("20261021000000")
 mod:SetCreatureID(11583)
 mod:SetEncounterID(617)
 mod:SetModelID(11380)
@@ -33,7 +33,7 @@ local specwarnClassCall		= mod:NewSpecialWarning("specwarnClassCall", nil, nil, 
 
 local timerPhase			= mod:NewPhaseTimer(15)
 local timerClassCall		= mod:NewTimer(30, "TimerClassCall", "136116", nil, nil, 5)
-local timerFearNext			= mod:NewCDTimer(26.7, 22686, nil, nil, nil, 2)--26-42.5
+local timerFearNext			= mod:NewCDTimer(25, 22686, nil, nil, nil, 2)
 
 mod.vb.addLeft = 42
 local addsGuidCheck = {}
