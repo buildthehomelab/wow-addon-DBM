@@ -45,6 +45,7 @@ This is a modified version of DBM-Warmane. The changes:
   Boss timers follow AzerothCore's scripts: the Ragnaros pull countdown (72.6s from the summon cast, 7.5s
   from Majordomo's death), Garr's Anti-Magic Pulse, Shazzrah's Gate and curse, Majordomo's alternating
   teleports and shields, and the first casts and cooldowns of Lucifron, Gehennas and Baron Geddon.
+- **MC/BWL timing follow-up.** Magmadar shows the first Fear at 9.5s and its 31s minimum repeat. BWL uses AzerothCore's Broodlord Knock Away spell (25778), first Blast Wave/Knock Away at 12s/30s, Vaelastrasz's 41s opening-yell countdown (29s from the Russian second-line trigger, synchronized across locales) and 15s Burning Adrenaline, drake Shadow Flame at 18s then a 15s minimum cooldown, and Nefarian's 25s minimum Fear cooldown. Random cooldown bars show the earliest scheduled cast, not an exact prediction; other casts can delay execution. Shadow Flame bars retain their existing disabled-by-default setting. Verified against wow-server's core pin `e3cdb38576c4e42a408d16ed6f2c60fce3d71685`; in-game validation is still required.
 - **Bots.** Timer recovery only asks raid members known to run DBM; playerbots never answer.
 - **Fixes.** Creature-ID lookups ignore non-string GUIDs. The backup raid-icon setter is chosen correctly.
   Toc file names match the files' case.
