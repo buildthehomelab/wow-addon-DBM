@@ -8,7 +8,7 @@ HARNESS = STUB.replace('o={args=args, calls={}}', 'o={kind=key,args=args,calls={
 DBM.Options={GroupOptionsBySpell=true}
 DBM_CORE_L=setmetatable({}, {__index=function() return "%s" end})
 TANK="Tank"
-function GetRealmName() return realm or "Evermore" end
+function GetRealmName() return realm or "ExampleRealm" end
 function UnitGUID() return "player-guid" end
 function UnitName() return "Player" end
 function UnitIsDeadOrGhost() return false end
@@ -41,7 +41,7 @@ function dispatch(event,id,creature)
 end
 '''
 class EncounterSync(unittest.TestCase):
- def load(self,path,difficulty='normal10',realm='Evermore'):
+ def load(self,path,difficulty='normal10',realm='ExampleRealm'):
   l=LuaRuntime();l.execute(HARNESS);g=l.globals();g.difficulty=difficulty;g.realm=realm
   l.execute((ROOT/path).read_text(encoding='utf-8-sig'));g.configure();return g
  def obj(self,g,kind,spell):
@@ -152,7 +152,7 @@ class EncounterSync(unittest.TestCase):
   self.assertTrue(g.dispatch('SPELL_CAST_SUCCESS',90006,351020));self.assertEqual(g.mod.vb.sporeCounter,1)
   self.assertEqual(self.start(self.obj(g,'NewNextTimer',29234)),13)
  def test_onyxia_ip40_timers_preserve_original_realm(self):
-  for realm,flame,whelps,guards in [('Evermore',10,90,False),('Onyxia_old',12.1,105,True)]:
+  for realm,flame,whelps,guards in [('ExampleRealm',10,90,False),('Onyxia_old',12.1,105,True)]:
    with self.subTest(realm=realm):
     g=self.load('DBM-Classic/VanillaOnyxia/Onyxia.lua',realm=realm);g.mod.OnCombatStart(g.mod,2)
     self.assertAlmostEqual(self.start(self.obj(g,'NewCDTimer',18435)),flame-2)
