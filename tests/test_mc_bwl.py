@@ -20,7 +20,9 @@ function DBM:NewMod()
   if methods[key] then return methods[key] end
   if key:match('^New') then return function(_, ...)
    local args={...}; local o={args=args, calls={}}
-   setmetatable(o, {__index=function(_, method) return function(_, ...)
+   setmetatable(o, {__index=function(_, method)
+    if method=="GetRemaining" then return function() return rawget(o, "remaining") or 0 end end
+    return function(_, ...)
     local call={...}; table.insert(o.calls, {method=method, args=call})
    end end})
    table.insert(objects, o); return o
@@ -75,6 +77,10 @@ class RaidTimers(unittest.TestCase):
   self.assertEqual(g.sync[1],'PullRP'); self.assertEqual(g.sync[2],29)
   g.mod.OnSync(g.mod,g.sync[1],str(g.sync[2]))
   self.assertEqual(self.last_start(g.objects[len(g.objects)]),29)
+  g.objects[len(g.objects)].remaining=29
+  g.mod.OnSync(g.mod,'PullRP','')
+  self.assertEqual(self.last_start(g.objects[len(g.objects)]),29)
+  g.objects[len(g.objects)].remaining=None
   g.mod.OnSync(g.mod,'PullRP','999')
   self.assertEqual(self.last_start(g.objects[len(g.objects)]),41)
  def test_magmadar(self):

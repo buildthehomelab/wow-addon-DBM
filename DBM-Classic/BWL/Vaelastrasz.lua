@@ -109,7 +109,12 @@ end
 function mod:OnSync(msg, remaining)
 	if msg == "PullRP" then
 		local duration = tonumber(remaining)
-		if duration ~= 29 and duration ~= 41 then duration = 41 end
+		if duration ~= 29 and duration ~= 41 then
+			-- Legacy Russian clients sync from the second line without a duration.
+			-- Preserve a countdown already anchored by an earlier/local trigger.
+			if timerCombatStart:GetRemaining() > 0 then return end
+			duration = 41
+		end
 		timerCombatStart:Start(duration)
 	end
 end
