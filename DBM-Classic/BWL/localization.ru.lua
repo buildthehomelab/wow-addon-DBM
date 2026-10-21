@@ -34,6 +34,8 @@ L:SetGeneralLocalization({
 })
 
 L:SetMiscLocalization({
+	-- This trigger is the second speech line: 12s + 17s until combat.
+	EventTimer = 29,
 	Event = "Умоляю, смертные! Бегите! Бегите, пока я еще могу себя удержать! Черный огонь бушует в моем сердце! Я должен... дать ему волю!"
 })
 

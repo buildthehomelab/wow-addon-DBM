@@ -9,7 +9,8 @@ function UnitClass() return "Mage", "MAGE" end
 local noop = function() end
 DBM_COMMON_L = setmetatable({}, {__index=function() return "" end})
 local methods = {
- GetLocalizedStrings=function() return {} end,
+ GetLocalizedStrings=function() return {Event="opening", EventTimer=eventTimer} end,
+ SendSync=function(self, event, remaining) sync={event,remaining} end,
  RegisterEventsInCombat=function(self, ...) events={...} end,
  GetModByName=function() return {vb={}, Options={}} end,
 }
@@ -66,6 +67,15 @@ class RaidTimers(unittest.TestCase):
   timer=g.find('timer',18173);self.assertEqual(self.last_start(timer),13)
   g.mod.SPELL_CAST_SUCCESS(g.mod,g.spell(18173));self.assertEqual(self.last_start(timer),15)
   g.mod.OnSync(g.mod,'PullRP')
+  self.assertEqual(self.last_start(g.objects[len(g.objects)]),41)
+  l.execute('eventTimer=29')
+  # The localization table is resolved at module load time.
+  l.execute((ROOT/'DBM-Classic/BWL/Vaelastrasz.lua').read_text())
+  g.mod.CHAT_MSG_MONSTER_YELL(g.mod,'opening')
+  self.assertEqual(g.sync[1],'PullRP'); self.assertEqual(g.sync[2],29)
+  g.mod.OnSync(g.mod,g.sync[1],str(g.sync[2]))
+  self.assertEqual(self.last_start(g.objects[len(g.objects)]),29)
+  g.mod.OnSync(g.mod,'PullRP','999')
   self.assertEqual(self.last_start(g.objects[len(g.objects)]),41)
  def test_magmadar(self):
   l=self.load('MC/Magmadar.lua');g=l.globals();g.mod.OnCombatStart(g.mod,2)

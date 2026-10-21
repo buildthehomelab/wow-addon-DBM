@@ -101,12 +101,15 @@ end
 --"<38.98 20:00:06> [ENCOUNTER_START] 611#Vaelastrasz the Corrupt#9#40", -- [152]
 function mod:CHAT_MSG_MONSTER_YELL(msg)
 	if msg == L.Event or msg:find(L.Event) then
-		self:SendSync("PullRP")
+		-- Carry the remaining time so mixed-language raids share one countdown.
+		self:SendSync("PullRP", L.EventTimer or 41)
 	end
 end
 
-function mod:OnSync(msg)
+function mod:OnSync(msg, remaining)
 	if msg == "PullRP" then
-		timerCombatStart:Start()
+		local duration = tonumber(remaining)
+		if duration ~= 29 and duration ~= 41 then duration = 41 end
+		timerCombatStart:Start(duration)
 	end
 end
