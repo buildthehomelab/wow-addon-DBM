@@ -13,7 +13,6 @@ mod:RegisterEventsInCombat(
 	"SPELL_AURA_REMOVED 24328 24689"
 )
 
---TODO, get a buff check for starting initial hard mode timers
 --TODO, an infoframe showing list of players silenced by Jeklik on hard mode instead uf using a spammy timer
 --[[
 (ability.id = 24324 or ability.id = 24686 or ability.id = 24687 or ability.id = 24688 or ability.id = 24689 or ability.id = 24690) and type = "cast"
@@ -31,76 +30,28 @@ local specWarnAspectOfThekal	= mod:NewSpecialWarningDispel(24689, "RemoveEnrage"
 
 local timerSiphon				= mod:NewNextTimer(90, 24324, nil, nil, nil, 2)
 local timerAspectOfMarli		= mod:NewTargetTimer(6, 24686, nil, nil, nil, 5)
-local timerAspectOfMarliCD		= mod:NewCDTimer(16, 24686, nil, nil, nil, 2)--16-20
+local timerAspectOfMarliCD		= mod:NewCDTimer(45, 24686, nil, nil, nil, 2)
 local timerAspectOfJeklik		= mod:NewTargetTimer(5, 24687, nil, false, 2, 5)--Could be spammy so off by default. Users can turn it on who want to see this
-local timerAspectOfJeklikCD		= mod:NewCDTimer(23, 24687, nil, nil, nil, 2)--23-24
-local timerAspectOfVenoxisCD	= mod:NewCDTimer(16.2, 24688, nil, nil, nil, 2)--16.2-18.3
+local timerAspectOfJeklikCD		= mod:NewCDTimer(24, 24687, nil, nil, nil, 2)
+local timerAspectOfVenoxisCD	= mod:NewCDTimer(16, 24688, nil, nil, nil, 2)
 local timerAspectOfThekal		= mod:NewBuffActiveTimer(8, 24689, nil, "Tank|RemoveEnrage|Healer", 3, 5, nil, DBM_COMMON_L.TANK_ICON..DBM_COMMON_L.ENRAGE_ICON)
-local timerAspectOfThekalCD		= mod:NewCDTimer(15.8, 24689, nil, nil, nil, 2)
+local timerAspectOfThekalCD		= mod:NewCDTimer(15, 24689, nil, nil, nil, 2)
 local timerAspectOfArlokk		= mod:NewTargetTimer(2, 24690, nil, nil, nil, 2)
-local timerAspectOfArlokkCD		= mod:NewNextTimer(30, 24690, nil, nil, nil, 2)--Needs more data to verify it's a next timer, rest aren't
+local timerAspectOfArlokkCD		= mod:NewCDTimer(10, 24690, nil, nil, nil, 2)
 local timerInsanity				= mod:NewTargetTimer(10, 24327, nil, nil, nil, 5)
-local timerInsanityCD			= mod:NewCDTimer(20, 24327, nil, nil, nil, 3)
+local timerInsanityCD			= mod:NewCDTimer(35, 24327, nil, nil, nil, 3)
 
-local enrageTimer				= mod:NewBerserkTimer(585)
+local enrageTimer				= mod:NewBerserkTimer(60)
 
 mod:AddRangeFrameOption(10, 24328)
-
-local function IsHardMode(self)
-	if DBM:IsInRaid() then
-		for i = 1, DBM:GetNumGroupMembers() do
-			local UnitID = "raid"..i.."target"
-			local guid = UnitGUID(UnitID)
-			if guid then
-				local cid = self:GetCIDFromGUID(guid)
-				if cid == 14834 then
-					if UnitHealthMax(UnitID) >= 1079325 then
-						return true
-					end
-				end
-			end
-		end
-	elseif DBM:IsInGroup() then
-		for i = 1, DBM:GetNumSubgroupMembers() do
-			local UnitID = "party"..i.."target"
-			local guid = UnitGUID(UnitID)
-			if guid then
-				local cid = self:GetCIDFromGUID(guid)
-				if cid == 14834 then
-					if UnitHealthMax(UnitID) >= 1079325 then
-						return true
-					end
-				end
-			end
-		end
-	else--Solo Raid?, maybe in classic TBC or classic WRATH. Future proofing the mod
-		local guid = UnitGUID("target")
-		if guid then
-			local cid = self:GetCIDFromGUID(guid)
-			if cid == 14834 then
-				if UnitHealthMax("target") >= 1079325 then
-					return true
-				end
-			end
-		end
-	end
-	return false
-end
 
 function mod:OnCombatStart(delay)
 	enrageTimer:Start(-delay)
 	warnSiphonSoon:Schedule(80-delay)
 	timerSiphon:Start(-delay)
-	--Hard Mode Timers
-	--This just checks if Hakkar has 1079325 health
-	--Can't just start these on all normal mode pulls
-	if IsHardMode(self) then
-		timerAspectOfMarliCD:Start(10-delay)
-		timerAspectOfThekalCD:Start(10-delay)
-		timerAspectOfVenoxisCD:Start(14-delay)
-		timerAspectOfJeklikCD:Start(21-delay)
-		timerAspectOfArlokkCD:Start(30-delay)
-	end
+	timerInsanityCD:Start(17-delay)
+	-- Priest survival is server-side; start each aspect cooldown on its first observed cast.
+
 end
 
 function mod:OnCombatEnd()
@@ -163,7 +114,7 @@ function mod:SPELL_AURA_APPLIED(args)
 end
 
 function mod:SPELL_AURA_REMOVED(args)
-	if args.spellId == 20475 then
+	if args.spellId == 24328 then
 		if args:IsPlayer() then
 			if self.Options.RangeFrame then
 				DBM.RangeCheck:Hide()

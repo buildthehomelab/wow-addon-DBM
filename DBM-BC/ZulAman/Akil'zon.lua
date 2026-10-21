@@ -20,7 +20,7 @@ local warnStormSoon		= mod:NewSoonAnnounce(43648, 5, 3)
 local specWarnStorm		= mod:NewSpecialWarningSpell(43648, nil, nil, nil, 2, 2)
 
 local timerStorm		= mod:NewCastTimer(8, 43648, nil, nil, nil, 2, nil, DBM_COMMON_L.HEALER_ICON)
-local timerStormCD		= mod:NewCDTimer(48.3, 43648, nil, nil, nil, 3, nil, nil, true) -- REVIEW! ~5s variance [48.3-53.0]. Added "keep" arg (10m Frostmourne 2022/10/28) - 53.0, 48.3, 52.7
+local timerStormCD		= mod:NewCDTimer(60, 43648, nil, nil, nil, 3, nil, nil, true)
 
 local berserkTimer		= mod:NewBerserkTimer(600)
 
@@ -28,8 +28,8 @@ mod:AddRangeFrameOption("10")
 mod:AddSetIconOption("StormIcon", 43648, true, false, {1})
 
 function mod:OnCombatStart(delay)
-	warnStormSoon:Schedule(43)
-	timerStormCD:Start(48) -- (10m Frostmourne 2022/10/28) - 48.0
+	warnStormSoon:Schedule(55-delay)
+	timerStormCD:Start(60-delay)
 	berserkTimer:Start(-delay)
 	if self.Options.RangeFrame then
 		DBM.RangeCheck:Show()
@@ -48,7 +48,7 @@ function mod:SPELL_AURA_APPLIED(args)
 		specWarnStorm:Show()
 		specWarnStorm:Play("specialsoon")
 		timerStorm:Start()
-		warnStormSoon:Schedule(43)
+		warnStormSoon:Schedule(55)
 		timerStormCD:Start()
 		if self.Options.RangeFrame then
 			DBM.RangeCheck:Hide()

@@ -6,6 +6,8 @@ mod:SetRevision("20231219231417")
 -- This pack loads on Warmane's Onyxia_old realm (stock Onyxia 10184) or in IP40 Onyxia's Lair.
 local onyxiaId = GetRealmName() == "Onyxia_old" and 10184 or 301000
 mod:SetCreatureID(onyxiaId)
+local isIP40 = onyxiaId == 301000
+local whelpInterval = isIP40 and 90 or 105
 
 mod:RegisterCombat("combat")
 
@@ -30,7 +32,7 @@ mod:AddTimerLine(DBM_CORE_L.SCENARIO_STAGE:format(1)..": 100% – 65%")
 local warnPhase2Soon		= mod:NewPrePhaseAnnounce(2)
 local warnWingBuffet		= mod:NewSpellAnnounce(18500, 2, nil, "Tank")
 
-local timerNextFlameBreath	= mod:NewCDTimer(13.3, 18435, nil, "Tank", 2, 5, nil, nil, true) -- Breath she does on ground in frontal cone. REVIEW! ~7s variance [13.3-20]. Added "keep" arg (25N Lordaeron 2022/10/13) - 13.3, 18.8, 16.3, 13.6
+local timerNextFlameBreath	= mod:NewCDTimer(isIP40 and 10 or 13.3, 18435, nil, "Tank", 2, 5, nil, nil, true) -- Breath she does on ground in frontal cone. REVIEW! ~7s variance [13.3-20]. Added "keep" arg (25N Lordaeron 2022/10/13) - 13.3, 18.8, 16.3, 13.6
 
 -- Stage Two (65% – 40%)
 mod:AddTimerLine(DBM_CORE_L.SCENARIO_STAGE:format(2)..": 65% – 40%")
@@ -47,7 +49,7 @@ local specWarnBlastNova		= mod:NewSpecialWarningRun(68958, "Melee", nil, nil, 4,
 
 local timerBreathCast		= mod:NewCastTimer(8, 18584, nil, nil, nil, 3)
 local timerNextDeepBreath	= mod:NewCDTimer(35, 18584, nil, nil, nil, 3)--Range from 35-60seconds in between based on where she moves to.
-local timerWhelps			= mod:NewNextTimer(105, 17646, nil, nil, nil, 1, 69004)
+local timerWhelps			= mod:NewNextTimer(whelpInterval, 17646, nil, nil, nil, 1, 69004)
 local timerBigAddCD			= mod:NewNextTimer(44.9, 68959, nil, "-Healer", nil, 1, 10697) -- Ignite Weapon for Onyxian Lair Guard
 
 -- Stage Three (40% – 0%)
@@ -64,8 +66,8 @@ local function Whelps(self)
 	if self:IsInCombat() then
 		self.vb.whelpsCount = self.vb.whelpsCount + 1
 		timerWhelps:Start()
-		warnWhelpsSoon:Schedule(95)
-		self:Schedule(105, Whelps, self)
+		warnWhelpsSoon:Schedule(whelpInterval-10)
+		self:Schedule(whelpInterval, Whelps, self)
 	end
 end
 
@@ -82,7 +84,7 @@ function mod:OnCombatStart(delay)
 	self.vb.whelpsCount = 0
 	self.vb.warned_preP2 = false
 	self.vb.warned_preP3 = false
-	timerNextFlameBreath:Start(12.1-delay) -- REVIEW! variance? (25N Lordaeron 2022/10/13) - 12.1
+	timerNextFlameBreath:Start((isIP40 and 10 or 12.1)-delay) -- REVIEW! variance? (25N Lordaeron 2022/10/13) - 12.1
 	if self.Options.SoundWTF3 then
 		DBM:PlaySoundFile("Interface\\AddOns\\DBM-Classic\\VanillaOnyxia\\sounds\\dps-very-very-slowly.ogg")
 		self:Schedule(20, DBM.PlaySoundFile, DBM, "Interface\\AddOns\\DBM-Classic\\VanillaOnyxia\\sounds\\hit-it-like-you-mean-it.ogg")
@@ -97,7 +99,7 @@ function mod:SPELL_CAST_START(args)
 	elseif args:IsSpellID(17086, 18351, 18564, 18576) or args:IsSpellID(18584, 18596, 18609, 18617) then	-- 1 ID for each direction
 		specWarnBreath:Show()
 		timerBreathCast:Start()
-		timerNextDeepBreath:Start()
+		if not isIP40 then timerNextDeepBreath:Start() end
 --		preWarnDeepBreath:Schedule(35)			  -- Pre-Warn Deep Breath
 	elseif args:IsSpellID(18435, 68970) then		-- Flame Breath (Ground phases)
 		timerNextFlameBreath:Start()
@@ -160,9 +162,9 @@ function mod:OnSync(msg)
 		self:SetStage(2)
 		self.vb.whelpsCount = 0
 		warnPhase2:Show()
-		timerBigAddCD:Start(20) -- (25N Lordaeron 2022/10/13) - Stage 2/20.0
+		if not isIP40 then timerBigAddCD:Start(20) end -- IP40 does not schedule lair guards.
 --		preWarnDeepBreath:Schedule(72)	-- Pre-Warn Deep Breath
-		timerNextDeepBreath:Start(75.5) -- Breath-17086. REVIEW! variance? (25N Lordaeron 2022/10/13) - 75.5
+		if not isIP40 then timerNextDeepBreath:Start(75.5) end -- IP40 breath timing depends on flight choices.
 		timerNextFlameBreath:Cancel()
 		self:Schedule(5, Whelps, self)
 		if self.Options.SoundWTF3 then

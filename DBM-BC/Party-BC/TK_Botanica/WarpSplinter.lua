@@ -10,17 +10,17 @@ mod:RegisterCombat("combat")
 
 mod:RegisterEventsInCombat(
 	"SPELL_CAST_SUCCESS 34716",
-	"SPELL_SUMMON 34727"
+	"SPELL_SUMMON 34730"
 )
 
 local warnTreants	= mod:NewSpellAnnounce(34727, 3)
 local warnStomp		= mod:NewSpellAnnounce(34716, 4)
 
-local timerTreants	= mod:NewNextTimer(45, 34727, nil, nil, nil, 1)
+local timerTreants	= mod:NewCDTimer(40, 34727, nil, nil, nil, 1)
 local timerStomp	= mod:NewBuffActiveTimer(5, 34716, nil, nil, nil, 3)
 
 function mod:OnCombatStart(delay)
-	timerTreants:Start(15-delay)
+	timerTreants:Start(20-delay)
 end
 
 function mod:SPELL_CAST_SUCCESS(args)
@@ -31,7 +31,7 @@ function mod:SPELL_CAST_SUCCESS(args)
 end
 
 function mod:SPELL_SUMMON(args)
-	if args.spellId == 34727 then
+	if args.spellId == 34730 then
 		warnTreants:Show()
 		timerTreants:Start()
 	end

@@ -10,7 +10,9 @@ mod:RegisterCombat("combat")
 
 mod:RegisterEventsInCombat(
 	"SPELL_AURA_APPLIED 34661 34670",
-	"SPELL_AURA_REMOVED 34661 34670"
+	"SPELL_AURA_REMOVED 34661 34670",
+	"SPELL_DAMAGE 34660",
+	"SPELL_MISSED 34660"
 )
 
 local warnSacrifice		= mod:NewTargetNoFilterAnnounce(34661, 2)

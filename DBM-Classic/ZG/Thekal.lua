@@ -12,9 +12,9 @@ mod:RegisterKill("yell", L.YellKill)
 
 mod:RegisterEventsInCombat(
 	"SPELL_CAST_START 24208",
-	"SPELL_AURA_APPLIED 21060 12540",
+	"SPELL_AURA_APPLIED 21060 12540 24169",
 	"SPELL_AURA_REMOVED 21060 12540",
-	"SPELL_SUMMON 24813",
+	"SPELL_CAST_SUCCESS 24183",
 	"CHAT_MSG_MONSTER_EMOTE",
 	"CHAT_MSG_MONSTER_YELL"
 )
@@ -27,12 +27,15 @@ local warnAdds			= mod:NewSpellAnnounce(24183, 3)
 
 local specWarnHeal		= mod:NewSpecialWarningInterrupt(24208, "HasInterrupt", nil, nil, 1, 2)
 
-local timerSimulKill	= mod:NewTimer(15, "TimerSimulKill", 24173)
+local timerSimulKill	= mod:NewTimer(10, "TimerSimulKill", 24173)
 local timerBlind		= mod:NewTargetTimer(10, 21060, nil, nil, nil, 3)
 local timerGouge		= mod:NewTargetTimer(4, 12540, nil, nil, nil, 3)
 
 
+mod.vb.priestDeathDeadline = 0
+
 function mod:OnCombatStart()
+	self.vb.priestDeathDeadline = 0
 	self:SetStage(1)
 end
 
@@ -46,7 +49,9 @@ function mod:SPELL_CAST_START(args)
 end
 
 function mod:SPELL_AURA_APPLIED(args)
-	if args.spellId == 21060 and args:IsDestTypePlayer() then
+	if args.spellId == 24169 and args:GetDestCreatureID() == 14509 then
+		self:SendSync("TigerForm")
+	elseif args.spellId == 21060 and args:IsDestTypePlayer() then
 		warnBlind:Show(args.destName)
 		timerBlind:Start(args.destName)
 	elseif args.spellId == 12540 and args:IsDestTypePlayer() then
@@ -63,7 +68,7 @@ function mod:SPELL_AURA_REMOVED(args)
 	end
 end
 
-function mod:SPELL_SUMMON(args)
+function mod:SPELL_CAST_SUCCESS(args)
 	if args.spellId == 24183 then
 		warnAdds:Show()
 	end
@@ -77,18 +82,21 @@ end
 
 function mod:CHAT_MSG_MONSTER_YELL(msg)
 	if msg == L.YellPhase2 and self.vb.phase < 2 then -- Bossfight (tank and spank)
-		self:SendSync("YellPhase2")
+		-- Tiger Form aura marks the actual transition, several seconds after this yell.
 	end
 end
 
 function mod:OnSync(msg)
 	if not self:IsInCombat() then return end
 	if msg == "PriestDied" then
-		if self:AntiSpam(20, 1) then
+		local now = GetTime()
+		if now >= self.vb.priestDeathDeadline then
+			self.vb.priestDeathDeadline = now + 10
 			warnSimulKill:Show()
 			timerSimulKill:Start()
 		end
-	elseif msg == "YellPhase2" and self.vb.phase < 2 then
+	elseif msg == "TigerForm" and self.vb.phase < 2 then
+		self.vb.priestDeathDeadline = 0
 		self:SetStage(2)
 		warnPhase2:Show()
 		timerSimulKill:Stop()

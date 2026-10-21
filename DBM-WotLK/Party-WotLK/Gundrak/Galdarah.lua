@@ -10,8 +10,7 @@ mod:SetEncounterID(390)
 mod:RegisterCombat("combat")
 
 mod:RegisterEventsInCombat(
-	"SPELL_CAST_SUCCESS 59824 59829",
-	"CHAT_MSG_MONSTER_YELL"
+	"SPELL_CAST_SUCCESS 55250 59824 55292 59829 54956 59827 55297 55299"
 )
 
 local warnPhase1		= mod:NewAnnounce("TimerPhase1", 4, "Interface\\Icons\\Spell_Shadow_ShadesOfDarkness")
@@ -19,48 +18,49 @@ local warnPhase2		= mod:NewAnnounce("TimerPhase2", 4, "Interface\\Icons\\Spell_S
 
 local specWarnSlash		= mod:NewSpecialWarningMove(59824)
 
-local timerStomp		= mod:NewCDTimer(20, 59829)
-local timerSlash		= mod:NewCDTimer(21, 59824)
-local timerCharge		= mod:NewCDTimer(21, 59827)
-local timerPhase1		= mod:NewTimer(52, "TimerPhase1", 72262)
-local timerPhase2		= mod:NewTimer(52, "TimerPhase2", 72262)
+local timerStomp		= mod:NewCDTimer(10, 59829)
+local timerSlash		= mod:NewCDTimer(17, 59824)
+local timerCharge		= mod:NewCDTimer(16, 59827)
+local timerPhase1		= mod:NewTimer(32, "TimerPhase1", 72262)
+local timerPhase2		= mod:NewTimer(32, "TimerPhase2", 72262)
 
-function mod:OnCombatStart()
+function mod:OnCombatStart(delay)
 	self:SetStage(1)
-	timerSlash:Start()
-	timerPhase2:Start(52)
+	timerSlash:Start(11-delay)
+	timerPhase2:Start(32-delay)
 end
 
 function mod:SPELL_CAST_SUCCESS(args)
-	if args.spellId == 59824 then
+	if args:IsSpellID(55250, 59824) then
 		timerSlash:Start()
 		specWarnSlash:Show()
-	elseif args.spellId == 59829 then
+	elseif args:IsSpellID(54956, 59827) then
+		timerCharge:Start()
+	elseif args.spellId == 55297 then
+		self:SetForm(2)
+	elseif args.spellId == 55299 then
+		self:SetForm(1)
+	elseif args:IsSpellID(55292, 59829) then
 		timerStomp:Start()
 	end
 end
 
-function mod:CHAT_MSG_MONSTER_YELL(msg)
-	if msg == L.YellPhase2_1 or msg:find(L.YellPhase2_1) or msg == L.YellPhase2_2 or msg:find(L.YellPhase2_2) then
-		if self.vb.phase == 1 then
-			self:SetStage(2)
-			timerPhase2:Cancel()
-			warnPhase2:Show()
-			timerPhase1:Start(52)
-			timerSlash:Cancel()
-			timerStomp:Cancel()
-			timerCharge:Cancel()
-			timerStomp:Start(25)
-			timerCharge:Start(21)
-		elseif self.vb.phase == 2 then
-			self:SetStage(1)
-			timerPhase1:Cancel()
-			warnPhase1:Show()
-			timerPhase2:Start(52)
-			timerSlash:Cancel()
-			timerStomp:Cancel()
-			timerCharge:Cancel()
-			timerSlash:Start()
-		end
+function mod:SetForm(stage)
+	if self.vb.phase == stage then return end
+	self:SetStage(stage)
+	timerPhase1:Stop()
+	timerPhase2:Stop()
+	timerSlash:Stop()
+	timerStomp:Stop()
+	timerCharge:Stop()
+	if stage == 2 then
+		warnPhase2:Show()
+		timerPhase1:Start()
+		timerStomp:Start(7)
+		timerCharge:Start(8)
+	else
+		warnPhase1:Show()
+		timerPhase2:Start()
+		timerSlash:Start(11)
 	end
 end

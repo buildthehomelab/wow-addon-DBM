@@ -22,13 +22,14 @@ local warnDecimateNow	= mod:NewSpellAnnounce(28374, 3)
 local specWarnEnrage	= mod:NewSpecialWarningDispel(19451, "RemoveEnrage", nil, nil, 1, 6)
 
 local timerEnrage		= mod:NewBuffActiveTimer(8, 19451, nil, nil, nil, 5, nil, DBM_COMMON_L.ENRAGE_ICON)
-local timerDecimate		= mod:NewCDTimer(104, 28374, nil, nil, nil, 2)
-local enrageTimer		= mod:NewBerserkTimer(420)
+local timerDecimate		= mod:NewCDTimer(110, 28374, nil, nil, nil, 2)
+local enrageTimer		= mod:NewBerserkTimer(360)
 
 function mod:OnCombatStart(delay)
-	enrageTimer:Start(420 - delay)
-	timerDecimate:Start(110 - delay) -- 25m Log review from 2022-05-05 - 1 minutes 50 seconds
-	warnDecimateSoon:Schedule(100 - delay)
+	enrageTimer:Start(-delay)
+	local decimate = self:IsDifficulty("normal10") and 110 or 90
+	timerDecimate:Start(decimate - delay)
+	warnDecimateSoon:Schedule(decimate - 10 - delay)
 end
 
 function mod:SPELL_AURA_APPLIED(args)
@@ -52,7 +53,8 @@ end
 function mod:SPELL_DAMAGE(_, _, _, _, _, _, spellId)
 	if (spellId == 28375 or spellId == 54426) and self:AntiSpam(20) then
 		warnDecimateNow:Show()
-		timerDecimate:Start()
-		warnDecimateSoon:Schedule(96)
+		local decimate = self:IsDifficulty("normal10") and 110 or 90
+		timerDecimate:Start(decimate)
+		warnDecimateSoon:Schedule(decimate - 10)
 	end
 end

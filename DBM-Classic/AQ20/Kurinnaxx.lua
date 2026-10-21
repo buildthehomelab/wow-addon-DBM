@@ -25,14 +25,14 @@ local specWarnWound		= mod:NewSpecialWarningStack(25646, nil, 5, nil, nil, 1, 6)
 local specWarnWoundTaunt= mod:NewSpecialWarningTaunt(25646, nil, nil, nil, 1, 2)
 
 local timerWound		= mod:NewTargetTimer(15, 25646, nil, "Tank", 2, 5, nil, DBM_COMMON_L.TANK_ICON)
-local timerSandTrapCD	= mod:NewCDTimer(8, 25656, nil, nil, nil, 3)
+local timerSandTrapCD	= mod:NewCDTimer(5, 25656, nil, nil, nil, 3)
 
 --mod:AddSpeedClearOption("AQ20", true)
 
 --mod.vb.firstEngageTime = nil
 
 function mod:OnCombatStart(delay)
-	timerSandTrapCD:Start(8-delay)
+	timerSandTrapCD:Start(5-delay)
 --[[	if not self.vb.firstEngageTime then
 		self.vb.firstEngageTime = time()
 		if self.Options.FastestClear and self.Options.SpeedClearTimer then
@@ -57,7 +57,7 @@ end
 
 function mod:SPELL_AURA_APPLIED(args)
 	--if args.spellId == 25646 and not self:IsTrivial(80) then
-	if args.spellID == 25646 then
+	if args.spellId == 25646 then
 		local amount = args.amount or 1
 		timerWound:Start(args.destName)
 		if amount >= 5 then

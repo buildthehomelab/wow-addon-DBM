@@ -22,7 +22,7 @@ mod:RegisterCombat("combat")--Maybe change to a yell later so pull detection wor
 -- 29184 29195 29197 29199
 
 mod:RegisterEventsInCombat(
-	"SPELL_CAST_SUCCESS 29234 29204 30281",
+	"SPELL_CAST_SUCCESS 29234 90006 29204 30281",
 	"SPELL_AURA_APPLIED 29184 29195 29197 29199",
 	"SPELL_AURA_REMOVED 29184 29195 29197 29199",
 	"SPELL_DAMAGE",
@@ -37,7 +37,7 @@ local warnRemoveCurse		= mod:NewSpellAnnounce(30281, 3)
 local warnHealSoon			= mod:NewAnnounce("WarningHealSoon", 4, 29184, nil, nil, nil, 29184)
 local warnHealNow			= mod:NewAnnounce("WarningHealNow", 1, 29184, false, nil, nil, 29184)
 
-local timerSpore			= mod:NewNextTimer(12, 29234, nil, nil, nil, 5, "Interface\\Icons\\INV_Mushroom_09", DBM_COMMON_L.DAMAGE_ICON) -- (PTR: [2024-07-08]@[18:39:24] ||| Onyxia: [2024-07-26]@[21:27:31])  -- "Summon Spore-29234-npc:16011-130 = pull:11.96, 12.01, 12.01, 12.00, 12.03" ||| "Summon Spore-29234-npc:16011-130 = pull:12.01, 12.01, 12.03, 11.99, 12.01, 12.01, 12.01, 12.00, 12.04, 12.00, 12.02, 12.02, 12.01, 12.03, 12.01, 12.03"
+local timerSpore			= mod:NewNextTimer(13, 29234, nil, nil, nil, 5, "Interface\\Icons\\INV_Mushroom_09", DBM_COMMON_L.DAMAGE_ICON)
 local timerDoom				= mod:NewNextTimer(30, 29204, nil, nil, nil, 2) -- (Onyxia: [2024-07-26]@[21:27:31]) - "Inevitable Doom-29204-npc:16011-130 = pull:119.99, 30.01, 30.01"
 local timerRemoveCurseCD	= mod:NewNextTimer(30, 30281, nil, nil, nil, 5) -- (Onyxia: [2024-07-26]@[21:27:31]) - "Remove Curse-30281-npc:16011-130 = pull:2.24, 30.01, 29.99, 30.03, 30.03, 30.01, 30.03"
 
@@ -49,7 +49,7 @@ end
 mod:AddDropdownOption("CorruptedSorting", {"Alphabetical", "Duration"}, "Alphabetical", "misc", nil, 29184)
 
 mod.vb.doomCounter	= 0
-mod.vb.sporeTimer	= 12
+mod.vb.sporeTimer	= 13
 mod.vb.sporeCounter = 0
 local hadCorrupted	= {}
 
@@ -90,9 +90,9 @@ end
 function mod:OnCombatStart(delay)
 	self.vb.doomCounter = 0
 	self.vb.sporeCounter = 0
-	timerRemoveCurseCD:Start(2.24 - delay) -- ~1s variance
-	timerSpore:Start(self.vb.sporeTimer-delay, 1)
-	warnSporeSoon:Schedule(self.vb.sporeTimer-5-delay)
+	timerRemoveCurseCD:Start(5 - delay)
+	timerSpore:Start(15-delay, 1)
+	warnSporeSoon:Schedule(10-delay)
 	timerDoom:Start(120-delay, 1)
 
 	local startTime = GetTime()
@@ -118,7 +118,7 @@ end
 
 function mod:SPELL_CAST_SUCCESS(args)
 	local spellId = args.spellId
-	if spellId == 29234 then
+	if spellId == 29234 or spellId == 90006 then
 		self.vb.sporeCounter = self.vb.sporeCounter + 1
 		timerSpore:Start(self.vb.sporeTimer, self.vb.sporeCounter + 1)
 		warnSporeNow:Show(self.vb.sporeCounter)
@@ -126,9 +126,8 @@ function mod:SPELL_CAST_SUCCESS(args)
 	elseif spellId == 29204 then  -- Inevitable Doom
 		self.vb.doomCounter = self.vb.doomCounter + 1
 		local timer = 30
-		if self.vb.doomCounter >= 7 then
-			if self.vb.doomCounter % 2 == 0 then timer = 17
-			else timer = 12 end
+		if self.vb.doomCounter >= 6 then
+			timer = 15
 		end
 		warnDoomNow:Show(self.vb.doomCounter)
 		timerDoom:Start(timer, self.vb.doomCounter + 1)

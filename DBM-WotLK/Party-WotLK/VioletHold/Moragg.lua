@@ -14,7 +14,7 @@ mod:RegisterEventsInCombat(
 local warningLink	= mod:NewTargetNoFilterAnnounce(54396, 2)
 
 local timerLink		= mod:NewTargetTimer(12, 54396, nil, nil, nil, 5, nil, DBM_COMMON_L.HEALER_ICON)
-local timerLinkCD	= mod:NewCDTimer(45, 54396, nil, nil, nil, 3)
+local timerLinkCD	= mod:NewCDTimer(18, 54396, nil, nil, nil, 3)
 
 function mod:SPELL_AURA_APPLIED(args)
 	if args.spellId == 54396 then

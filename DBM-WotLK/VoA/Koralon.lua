@@ -8,7 +8,8 @@ mod:SetEncounterID(776)
 mod:RegisterCombat("combat")
 
 mod:RegisterEventsInCombat(
-	"SPELL_CAST_START 67328 66665 66725 68161",
+	"SPELL_CAST_START 67328 66665",
+	"SPELL_CAST_SUCCESS 66725 68161",
 	"SPELL_AURA_APPLIED 66684 67332 66721",
 	"SPELL_AURA_APPLIED_DOSE 66721"
 )
@@ -20,19 +21,17 @@ local warnBurningFury		= mod:NewStackAnnounce(66721, 2, nil, "Tank|Healer")
 
 local specWarnCinder		= mod:NewSpecialWarningMove(66684, nil, nil, nil, 1, 2)
 
-local timerNextMeteor		= mod:NewNextTimer(47, 66725, nil, nil, nil, 5, nil, DBM_COMMON_L.TANK_ICON) -- REVIEW! variance? (10N Lordaeron 2022/09/23) - 47.0
+local timerNextMeteor		= mod:NewCDTimer(45, 66725, nil, nil, nil, 5, nil, DBM_COMMON_L.TANK_ICON)
 local timerNextBurningFury	= mod:NewNextTimer(20, 66721, nil, nil, nil, 5, nil, DBM_COMMON_L.TANK_ICON..DBM_COMMON_L.HEALER_ICON) -- (10N Lordaeron 2022/09/23) - 20.0, 22.0, 20.0, 20.0
 local timerBreath			= mod:NewBuffActiveTimer(4.5, 66665, nil, nil, nil, 2)
 local timerBreathCD			= mod:NewCDTimer(45, 66665, nil, nil, nil, 2) -- (10N Lordaeron 2022/09/23) - 45.0, 45.0
 
-local timerKoralonEnrage	= mod:NewBerserkTimer(300, nil, "KoralonEnrage")
 
 function mod:OnCombatStart(delay)
-	timerKoralonEnrage:Start(-delay)
-	timerNextMeteor:Start(44.9-delay) -- REVIEW! variance? (10N Lordaeron 2022/09/23) - pull:44.9
-	warnMeteorSoon:Schedule(44.9-5-delay)
-	timerBreathCD:Start(12.4-delay) -- REVIEW! variance? (10N Lordaeron 2022/09/23) - pull:12.4
-	timerNextBurningFury:Start() -- (10N Lordaeron 2022/09/23) - pull:19.9
+	timerNextMeteor:Start(30-delay)
+	warnMeteorSoon:Schedule(25-delay)
+	timerBreathCD:Start(10-delay)
+	timerNextBurningFury:Start(-delay)
 end
 
 function mod:SPELL_CAST_START(args)
@@ -40,10 +39,14 @@ function mod:SPELL_CAST_START(args)
 		warnBreath:Show()
 		timerBreath:Start()
 		timerBreathCD:Start()
-	elseif args:IsSpellID(66725, 68161) then
+	end
+end
+
+function mod:SPELL_CAST_SUCCESS(args)
+	if args:IsSpellID(66725, 68161) then
 		warnMeteor:Show()
 		timerNextMeteor:Start()
-		warnMeteorSoon:Schedule(42)
+		warnMeteorSoon:Schedule(40)
 	end
 end
 
