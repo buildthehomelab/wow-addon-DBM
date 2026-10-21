@@ -24,8 +24,8 @@ local yellInferno		= mod:NewYell(31299)
 
 local timerSwarm		= mod:NewBuffFadesTimer(20, 31306, nil, nil, nil, 3)
 local timerSleep		= mod:NewBuffFadesTimer(10, 31298, nil, nil, nil, 3)
-local timerSleepCD		= mod:NewCDTimer(19, 31298, nil, nil, nil, 3)
-local timerInferno		= mod:NewCDTimer(51, 31299, nil, nil, nil, 3)
+local timerSleepCD		= mod:NewCDTimer(35, 31298, nil, nil, nil, 3)
+local timerInferno		= mod:NewCDTimer(50, 31299, nil, nil, nil, 3)
 
 function mod:InfernoTarget(targetname)
 	if not targetname then return end

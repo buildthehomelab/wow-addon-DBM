@@ -62,7 +62,7 @@ function mod:OnCombatStart(delay)
 	if self:IsHeroic() then
 		enrageTimer:Start(360-delay)
 	else
-		enrageTimer:Start(480-delay)
+		enrageTimer:Start(600-delay)
 	end
 	self.vb.debuffIcon = 1
 end

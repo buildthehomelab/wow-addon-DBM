@@ -10,7 +10,7 @@ mod:RegisterCombat("combat")
 
 mod:RegisterEventsInCombat(
 	"SPELL_CAST_SUCCESS 31909",
-	"SPELL_AURA_APPLIED 33792",
+	"SPELL_AURA_APPLIED 33792 31911",
 	"SPELL_AURA_REMOVED 33792"
 )
 

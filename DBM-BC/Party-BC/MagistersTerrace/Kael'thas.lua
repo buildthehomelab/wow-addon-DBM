@@ -11,7 +11,7 @@ mod:SetModelID(22906)
 mod:RegisterCombat("combat")
 
 mod:RegisterEventsInCombat(
-	"SPELL_CAST_START 36819",
+	"SPELL_CAST_START 36819 44224",
 	"SPELL_CAST_SUCCESS 44194 36819",
 	"SPELL_AURA_APPLIED 46165",
 	"SPELL_AURA_REMOVED 46165",
@@ -26,16 +26,17 @@ local specwarnPyroblast		= mod:NewSpecialWarningInterrupt(36819, "HasInterrupt",
 local specwarnPhoenix		= mod:NewSpecialWarningSwitch(44194, "-Healer", nil, nil, 1, 2)
 
 local timerPyroblast		= mod:NewCastTimer(4, 36819, nil, nil, nil, 4, nil, DBM_COMMON_L.INTERRUPT_ICON)
-local timerShockBarrior		= mod:NewNextTimer(60, 46165, nil, nil, nil, 4, nil, DBM_COMMON_L.INTERRUPT_ICON)
-local timerPhoenix			= mod:NewCDTimer(45, 44194, nil, nil, nil, 1)--45-70?
-local timerGravityLapse		= mod:NewBuffActiveTimer(35, 44194, nil, nil, nil, 6)
-local timerGravityLapseCD	= mod:NewNextTimer(13.5, 44194, nil, nil, nil, 6)
+local timerShockBarrior		= mod:NewCDTimer(50, 46165, nil, nil, nil, 4, nil, DBM_COMMON_L.INTERRUPT_ICON)
+local timerPhoenix			= mod:NewCDTimer(60, 44194, nil, nil, nil, 1)
+local timerGravityLapse		= mod:NewBuffActiveTimer(34, 44224, nil, nil, nil, 6)
+local timerGravityLapseCD	= mod:NewNextTimer(10, 44224, nil, nil, nil, 6)
 
 mod.vb.interruptable = false
 
 function mod:OnCombatStart(delay)
 	self.vb.interruptable = false
 	self:SetStage(1)
+	timerPhoenix:Start(15-delay)
 	if self:IsHeroic() then
 		timerShockBarrior:Start(-delay)
 	end
@@ -49,7 +50,7 @@ function mod:SPELL_CAST_START(args)
 	elseif spellId == 44224 then
 		WarnGravityLapse:Show()
 		timerGravityLapse:Start()
-		timerGravityLapseCD:Schedule(35)--Show after current lapse has ended
+		timerGravityLapseCD:Schedule(34)
 		if self.vb.phase < 2 then
 			self:SetStage(2)
 			timerShockBarrior:Stop()

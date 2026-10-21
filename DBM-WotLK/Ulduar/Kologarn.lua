@@ -30,7 +30,7 @@ mod:SetBossHealthInfo(
 )
 
 -- General
-local enrageTimer				= mod:NewBerserkTimer(600)
+
 local timerTimeForDisarmed		= mod:NewTimer(10, "achievementDisarmed")	-- 10 HC / 12 nonHC
 
 --NOTE: Two crunch armors are setup to appear in gui twice on purpose, because they are very different mechanically. One is meant to be ignored and one is meant to be tank swap
@@ -55,14 +55,14 @@ mod:AddTimerLine(L.Health_Right_Arm)
 local warnGrip					= mod:NewTargetNoFilterAnnounce(64292, 2)
 
 local timerNextGrip				= mod:NewNextTimer(25, 62166, nil, nil, nil, 3) -- (2022/07/05 log review || 25m Lordaeron 2022/10/30) - 25.0 || 25.0, 25.1, 25.0
-local timerRespawnRightArm		= mod:NewTimer(30, "timerRightArm", nil, nil, nil, 1)
+local timerRespawnRightArm		= mod:NewTimer(50, "timerRightArm", nil, nil, nil, 1)
 
 mod:AddSetIconOption("SetIconOnGripTarget", 64292, true, false, {7, 6, 5})
 
 -- Left Arm
 mod:AddTimerLine(L.Health_Left_Arm)
 local timerNextShockwave		= mod:NewNextTimer(25, 63982, nil, nil, nil, 2) -- (2022/07/05 log review || 25m Lordaeron 2022/10/30) - 25.0 || 25.0, 25.0, 25.0, 25.1
-local timerRespawnLeftArm		= mod:NewTimer(30, "timerLeftArm", nil, nil, nil, 1)
+local timerRespawnLeftArm		= mod:NewTimer(50, "timerLeftArm", nil, nil, nil, 1)
 
 -- 5/23 00:33:48.648  SPELL_AURA_APPLIED,0x0000000000000000,nil,0x80000000,0x0480000001860FAC,"Hâzzad",0x4000512,63355,"Crunch Armor",0x1,DEBUFF
 -- 6/3 21:41:56.140 UNIT_DIED,0x0000000000000000,nil,0x80000000,0xF1500080A60274A0,"Rechter Arm",0xa48
@@ -82,7 +82,6 @@ local function GripAnnounce(self)
 end
 
 function mod:OnCombatStart(delay)
-	enrageTimer:Start(-delay)
 	timerNextSmash:Start(sformat("v%s-%s", 5-delay, 7.5-delay)) -- ~2.5s variance [4.96-7.42]
 	timerNextEyebeam:Start(21-delay) -- (2022/07/05 log review || 25m Lordaeron 2022/10/30) - 21 || 20.2
 	timerNextShockwave:Start(18.2-delay) -- (2022/07/05 log review || 25m Lordaeron 2022/10/30) - 19 || 18.2

@@ -11,18 +11,18 @@ mod:RegisterCombat("combat")
 
 mod:RegisterEventsInCombat(
 	"SPELL_CAST_START 49555",
-	"SPELL_CAST_SUCCESS 59803",
+	"SPELL_CAST_SUCCESS 49380 59803",
 	"CHAT_MSG_RAID_BOSS_EMOTE"
 )
 
 local warnConsume		= mod:NewSpellAnnounce(59803,1)
 
-local timerExplosionCD	= mod:NewCDTimer(16, 49555)
+local timerExplosionCD	= mod:NewCDTimer(15, 49555)
 local timerNextConsume	= mod:NewNextTimer(15, 59803)
 
-function mod:OnCombatStart()
-	timerExplosionCD:Start(3)
-	timerNextConsume:Start()
+function mod:OnCombatStart(delay)
+	timerExplosionCD:Start(35-delay)
+	timerNextConsume:Start(-delay)
 end
 
 function mod:SPELL_CAST_START(args)
@@ -32,7 +32,7 @@ function mod:SPELL_CAST_START(args)
 end
 
 function mod:SPELL_CAST_SUCCESS(args)
-	if args.spellId == 59803 and self:AntiSpam(1) then
+	if args:IsSpellID(49380, 59803) and self:AntiSpam(1) then
 		warnConsume:Show()
 		timerNextConsume:Start()
 	end

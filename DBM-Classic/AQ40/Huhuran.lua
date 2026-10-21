@@ -29,9 +29,9 @@ local specWarnFrenzy	= mod:NewSpecialWarningDispel(26051, "RemoveEnrage", nil, n
 
 local timerSting		= mod:NewBuffFadesTimer(12, 26180, nil, nil, nil, 5, nil, DBM_COMMON_L.POISON_ICON..DBM_COMMON_L.DEADLY_ICON)
 local timerStingCD		= mod:NewCDTimer(25, 26180, nil, nil, nil, 3, nil, DBM_COMMON_L.POISON_ICON..DBM_COMMON_L.DEADLY_ICON)
-local timerPoisonCD		= mod:NewCDTimer(11, 26053, nil, nil, nil, 3)
+local timerPoisonCD		= mod:NewCDTimer(10, 26053, nil, nil, nil, 3)
 local timerPoison		= mod:NewBuffFadesTimer(8, 26053)
-local timerFrenzyCD		= mod:NewCDTimer(11.8, 26051, nil, false, 3, 5, nil, DBM_COMMON_L.TANK_ICON..DBM_COMMON_L.HEALER_ICON)--Off by default do to ridiculous variation
+local timerFrenzyCD		= mod:NewCDTimer(12, 26051, nil, false, 3, 5, nil, DBM_COMMON_L.TANK_ICON..DBM_COMMON_L.HEALER_ICON)
 local timerAcid			= mod:NewTargetTimer(30, 26050, nil, "Tank", 3, 5, nil, DBM_COMMON_L.TANK_ICON)
 local timerBerserk		= mod:NewBerserkTimer(300)
 
@@ -43,9 +43,9 @@ local StingTargets = {}
 function mod:OnCombatStart(delay)
 	self.vb.prewarn_berserk = false
 	table.wipe(StingTargets)
-	timerFrenzyCD:Start(9.6-delay)
-	timerPoisonCD:Start(11-delay)
-	timerStingCD:Start(20-delay)
+	timerFrenzyCD:Start(12-delay)
+	timerPoisonCD:Start(10-delay)
+	timerStingCD:Start(25-delay)
 	timerBerserk:Start(-delay)
 	if self.Options.RangeFrame then
 		DBM.RangeCheck:Show(18)
@@ -91,9 +91,7 @@ function mod:SPELL_AURA_APPLIED(args)
 		timerFrenzyCD:Start()
 	elseif args.spellId == 26068 and args:IsDestTypeHostile() then
 		warnBerserk:Show()
-		timerStingCD:Stop()
 		timerFrenzyCD:Stop()
-		timerPoisonCD:Stop()
 		timerBerserk:Stop()
 	--elseif args.spellId == 26050 and not self:IsTrivial(80) then
 	elseif args.spellId == 26050 and args:IsPlayer() then

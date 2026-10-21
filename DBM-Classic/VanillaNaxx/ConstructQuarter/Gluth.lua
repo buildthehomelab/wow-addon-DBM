@@ -26,12 +26,12 @@ local specWarnEnrage		= mod:NewSpecialWarningDispel(19451, "RemoveEnrage", nil, 
 local timerEnrage			= mod:NewBuffActiveTimer(8, 19451, nil, nil, nil, 5, nil, DBM_COMMON_L.ENRAGE_ICON)
 local timerDecimate			= mod:NewCDTimer(105, 28375, nil, nil, nil, 2) -- (Onyxia: [2024-07-08]@[18:54:05]) - "Decimate-28375-npc:15932-942 = pull:104.98, 105.00, 0.00, 0.00, 0.01"
 local timerTerrifyingRoarCD = mod:NewCDTimer(20, 29685, nil, nil, nil, 6) -- ~1s variance [20.01-20.96]. (Onyxia: [2024-07-08]@[18:54:05]) - "Terrifying Roar-29685-npc:15932-942 = pull:20.54, 20.35, 20.43, 20.91, 20.81, 20.03, 20.01, 20.36, 20.02, 20.51, 20.96"
-local enrageTimer			= mod:NewBerserkTimer(420)
+local enrageTimer			= mod:NewBerserkTimer(360)
 
 function mod:OnCombatStart(delay)
 	enrageTimer:Start(-delay)
-	timerDecimate:Start(-delay) -- 25m Log review from 2022-05-05 - 1 minutes 50 seconds
-	warnDecimateSoon:Schedule(95-delay)
+	timerDecimate:Start(110-delay)
+	warnDecimateSoon:Schedule(100-delay)
 	warnTerrifyingRoarSoon:Schedule(15)
 	timerTerrifyingRoarCD:Start()
 end

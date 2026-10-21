@@ -2337,8 +2337,41 @@ function DBM:GetUnitCreatureId(uId)
 	return self:GetCIDFromGUID(UnitGUID(uId))
 end
 
+-- Naxx40 clones use custom entries on Individual Progression. Keep the canonical IDs used
+-- by the vanilla encounter modules for combat detection, health scans and combat-log args.
+local ip40NaxxCreatureIds = {
+	[351000] = 15928, -- Thaddius
+	[351001] = 15929, -- Stalagg
+	[351002] = 15930, -- Feugen
+	[351003] = 15931, -- Grobbulus
+	[351004] = 15932, -- Gluth
+	[351005] = 15936, -- Heigan
+	[351006] = 15952, -- Maexxna
+	[351007] = 15953, -- Faerlina
+	[351008] = 15954, -- Noth
+	[351009] = 15956, -- Anub'Rekhan
+	[351018] = 15989, -- Sapphiron
+	[351019] = 15990, -- Kel'Thuzad
+	[351020] = 16011, -- Loatheb
+	[351028] = 16028, -- Patchwerk
+	[351035] = 16060, -- Gothik
+	[351036] = 16061, -- Razuvious
+	[351037] = 30549, -- Mograine uses the vanilla module's fourth-horseman slot
+	[351038] = 16063, -- Zeliek
+	[351039] = 16064, -- Korth'azz
+	[351040] = 16065, -- Blaumeux
+	[351044] = 16125, -- Unrelenting Deathknight
+	[351045] = 16126, -- Unrelenting Rider
+	[351079] = 16486, -- Web Wrap
+	[351084] = 16803, -- Deathknight Understudy
+}
 function DBM:GetCIDFromGUID(guid)
-	return type(guid) == "string" and tonumber(guid:sub(8, 12), 16) or 0
+	local cid = type(guid) == "string" and tonumber(guid:sub(8, 12), 16) or 0
+	local canonicalId = ip40NaxxCreatureIds[cid]
+	if canonicalId and DBM:IsIP40Raid() then
+		return canonicalId
+	end
+	return cid
 end
 
 function DBM:IsNonPlayableGUID(guid)
@@ -11999,7 +12032,7 @@ function bossModPrototype:GetBossHPString(cId)
 	for i = 0, mmax(GetNumRaidMembers(), GetNumPartyMembers()) do
 		local unitId = ((i == 0) and "target") or idType..i.."target"
 		local guid = UnitGUID(unitId)
-		if guid and tonumber(guid:sub(8, 12), 16) == cId then
+		if guid and self:GetCIDFromGUID(guid) == cId then
 			return floor(UnitHealth(unitId)/UnitHealthMax(unitId) * 100).."%"
 		end
 	end

@@ -18,14 +18,13 @@ local warningSlash	= mod:NewSpellAnnounce(48873, 3)
 local warningBite	= mod:NewTargetNoFilterAnnounce(48920, 2, nil, "Healer")
 local warningFear	= mod:NewSpellAnnounce(22686, 1)
 
-local timerFearCD	= mod:NewCDTimer(15, 22686, nil, nil, nil, 2)  -- cooldown ??
+
 local timerSlash	= mod:NewTargetTimer(10, 48873)
 local timerSlashCD	= mod:NewCDTimer(18, 48873, nil, "Tank|Healer", nil, 5)
 
 function mod:SPELL_CAST_SUCCESS(args)
-	if args.spellId == 22686 and args.sourceGUID == 27483 then
+	if args.spellId == 22686 and args:GetSrcCreatureID() == 27483 then
 		warningFear:Show()
-		timerFearCD:Start()
 	end
 end
 

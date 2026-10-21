@@ -15,10 +15,11 @@ local warningNova	= mod:NewSpellAnnounce(52960, 3)
 
 local specWarnNova	= mod:NewSpecialWarningRun(52960, false, nil, nil, 4, 2)
 
-local timerNovaCD	= mod:NewCDTimer(30, 52960, nil, nil, nil, 2)
+local timerNovaCD	= mod:NewCDTimer(15, 52960, nil, nil, nil, 2)
 local timerAchieve	= mod:NewAchievementTimer(120, 1867)
 
 function mod:OnCombatStart(delay)
+	timerNovaCD:Start(15-delay)
 	if not self:IsDifficulty("normal5") then
 		timerAchieve:Start(-delay)
 	end

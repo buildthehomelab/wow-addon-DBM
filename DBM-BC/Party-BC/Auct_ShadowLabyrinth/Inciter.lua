@@ -16,10 +16,10 @@ mod:RegisterEventsInCombat(
 local warnChaos			= mod:NewSpellAnnounce(33676, 4)
 
 local timerChaos		= mod:NewBuffActiveTimer(15, 33676, nil, nil, nil, 3)
-local timerNextChaos	= mod:NewNextTimer(40.5, 33676, nil, nil, nil, 6)
+local timerNextChaos	= mod:NewCDTimer(50, 33676, nil, nil, nil, 6)
 
 function mod:OnCombatStart(delay)
-	timerNextChaos:Start(15-delay)
+	timerNextChaos:Start(24-delay)
 end
 
 function mod:SPELL_CAST_SUCCESS(args)

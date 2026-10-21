@@ -12,7 +12,7 @@ mod:RegisterEventsInCombat(
 
 local warningSmokeBomb			= mod:NewSpellAnnounce(7964, 2)
 
-local timerSmokeBombCD			= mod:NewCDTimer(15.8, 7964, nil, nil, nil, 3)
+local timerSmokeBombCD			= mod:NewCDTimer(15, 7964, nil, nil, nil, 3)
 
 function mod:OnCombatStart(delay)
 	timerSmokeBombCD:Start(8-delay)
