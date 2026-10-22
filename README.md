@@ -45,7 +45,16 @@ This is a modified version of DBM-Warmane. The changes:
   Boss timers follow AzerothCore's scripts: the Ragnaros pull countdown (72.6s from the summon cast, 7.5s
   from Majordomo's death), Garr's Anti-Magic Pulse, Shazzrah's Gate and curse, Majordomo's alternating
   teleports and shields, and the first casts and cooldowns of Lucifron, Gehennas and Baron Geddon.
-- **MC/BWL timing follow-up.** Magmadar shows the first Fear at 9.5s and its 31s minimum repeat. BWL uses AzerothCore's Broodlord Knock Away spell (25778), first Blast Wave/Knock Away at 12s/30s, Vaelastrasz's 41s opening-yell countdown (29s from the Russian second-line trigger, synchronized across locales) and 15s Burning Adrenaline, drake Shadow Flame at 18s then a 15s minimum cooldown, and Nefarian's 25s minimum Fear cooldown. Random cooldown bars show the earliest scheduled cast, not an exact prediction; other casts can delay execution. Shadow Flame bars retain their existing disabled-by-default setting. Verified against wow-server's core pin `e3cdb38576c4e42a408d16ed6f2c60fce3d71685`; in-game validation is still required.
+- **MC/BWL timing follow-up.** Magmadar shows the first Fear at 9.5s and its 31s minimum repeat. BWL uses AzerothCore's Broodlord Knock Away spell (25778), first Blast Wave/Knock Away at 12s/30s, Vaelastrasz's 41s opening-yell countdown (29s from the Russian second-line trigger, synchronized across locales) and 15s Burning Adrenaline, drake Shadow Flame at 18s then a 15s minimum cooldown, and Nefarian's 25s minimum Fear cooldown. Random cooldown bars show the earliest scheduled cast, not an exact prediction; other casts can delay execution. Shadow Flame bars retain their existing disabled-by-default setting. In-game validation is still required.
+- **Encounter timing.** Timers and warnings in the Classic, BC and Wrath packs follow the server's boss scripts. Cooldown bars show the earliest scheduled recurrence; random selection, event queues and phase changes can delay the actual cast. Not every encounter has been checked in a game client. The changes:
+  - *Naxxramas 40.* Individual Progression's custom Naxxramas creature IDs map to the canonical vanilla IDs, only on the `IP40` difficulty. This covers engagement, kill counting, combat-log helpers and health scans. Gluth and Loatheb timers are corrected, including the direct spore summon spell 90006.
+  - *Onyxia 40.* Flame and whelp intervals follow the Onyxia 40 script. Guard and breath predictions the script doesn't support are off on `IP40`.
+  - *Zul'Gurub and AQ.* Kurinnaxx, Jeklik, Edge of Madness and Thekal event handling is repaired. Hakkar, Kurinnaxx, Huhuran, the Bug Trio, the Twin Emperors and Viscidus use the server's cooldowns. Huhuran's poison and sting timers survive berserk. Thekal keeps his first resurrection deadline and the mod watches for his actual Tiger Form.
+  - *Hakkar.* No health-based guess for surviving priests. Aspect cooldowns start on their first observed cast. Insanity timing and the Corrupted Blood range frame cleanup are corrected.
+  - *Classic dungeons.* Gnomeregan, Maraudon, Scarlet Monastery and the Stockade follow the server's schedules. Thermaplugg's misspelled event handler, Herod's Whirlwind condition and Landslide's Knock Away ID are fixed.
+  - *Burning Crusade.* Teron Gorefiend's Shadow of Death and Illidan's Flame Crash subscriptions are restored. Teron, Anetheron, Void Reaver and Akil'zon timing and Malacrass's Flash Heal ID are corrected. Dungeon events for the Black Morass drake, Epoch Hunter, Kael'thas, Warp Splinter, Thorngrin and Zereketh are restored. Hellmaw, Blackheart, Vorpil, Tavarok and Kael'thas schedules are corrected.
+  - *Wrath.* Raids: Vault of Archavon openings and repeats, Koralon (no hard berserk, triggered Meteor Fists), Gluth's difficulty-specific Decimate, Grobbulus spray and berserk, Sartharion's first breath and walls, selected Ulduar schedules and arm respawns, and the Jaraxxus and Twin Val'kyr timers. Dungeons: Dred's creature check (no health-triggered fear prediction), Consume and Gal'darah spells, form transitions and charge recovery, and the Eck, Moorabi, Loken, Maiden, Skadi, Moragg and Cyanigosa schedules.
+  - *Other.* Lethon's breath stacks and Sulfuron's Inspire-removal handling are restored.
 - **Bots.** Timer recovery only asks raid members known to run DBM; playerbots never answer.
 - **Fixes.** Creature-ID lookups ignore non-string GUIDs. The backup raid-icon setter is chosen correctly.
   Toc file names match the files' case.
@@ -56,9 +65,12 @@ This is a modified version of DBM-Warmane. The changes:
 
 1. Unpack the new release over a clean checkout of the stock import (the 36 folders) and commit it.
 2. Run `python3 tools/merge_packs.py` from the repo root and commit.
-3. Re-apply the fixes from the "Fix DBM for AzerothCore and Individual Progression", "Detect Individual
-   Progression's Onyxia 40" and "Match Molten Core timers to AzerothCore" commits at their new paths
+3. Re-apply this fork's fixes, the ones listed under "Changes from DBM-Warmane", at their new paths
    (`DBM-MC/` is now `DBM-Classic/MC/`). The script adds the `IP40` realm tags itself.
+
+## Tests
+
+`python -m unittest discover -s tests -v` runs the Molten Core and Blackwing Lair checks and the registered-event, timer, difficulty and IP40 identity checks against the boss mods under Lua 5.1. It needs `lupa` with Lua 5.1 support.
 
 ## Patch Notes: Deadly Boss Mods
 Category: Addons
